@@ -97,3 +97,36 @@ if st.button("Run Algorithm"):
 
     df_results = pd.DataFrame(results)
     st.write(df_results)
+    
+    # Data
+    df = { 
+            'x0': df_results['OF_0'],
+            'y0': df_results['OF_1'],
+        }
+
+    # Chart setup
+    chart_config = {
+                    'name': 'figure1-3-1',
+                    'width': 16, 
+                    'height': 8,
+                    'dots_per_inch': 600, 
+                    'extension': 'svg',
+                    'marker_size': [20],
+                    'color_map': ['red', 'blue'],
+                    'x_axis_label': 'Weight',
+                    'x_axis_size': 10,
+                    'y_axis_label': 'Height',
+                    'y_axis_size': 10,
+                    'axises_color': 'red', 
+                    'labels_size': 10,
+                    'labels_color': 'blue',
+                    'on_grid': False,
+                    'y_log': False,
+                    'x_log': False,
+                    'legend': [None],
+                    'legend_location': None,
+                    'size_legend': 12,
+                }
+
+    # Call function
+    st.pyplot(scatter_chart(dataset=df, plot_setup=chart_config))
