@@ -29,104 +29,106 @@ width_max = st.number_input('Width max', value=None)
 height_min = st.number_input('Height mini', value=None)
 height_max = st.number_input('Height max', value=None)
 
+model = st.selectbox('Model', ['AG', 'Monte Carlo'])
 
 if st.button("Run Algorithm"):
-    st.write("Running Algorithm...")
+    if model == 'AG':
+        st.write("Running Algorithm...")
 
-    variaveis_proj = {
-        'g (kN/m)': g,
-        'q (kN/m)': q,
-        'l (m)': l,
-        'tipo de seção': 'retangular',
-        'tipo de protensão': 'Parcial',
-        'fck,ato (kPa)': f_c * 1E3,
-        'fck (kPa)': f_cj * 1E3,
-        'lambda': 0.5,
-        'penalidade': 1E6,
-        'fator de fluência': 2.5,
-        'flecha limite de fabrica (m)': 7/1000,
-        'flecha limite de serviço (m)': 7/250
-    }
-
-    algorithm_setup = {
-        'number of iterations': int(interations),
-        'number of population': int(pop_size),
-        'number of dimensions': 4,
-        'x pop lower limit': [pres_min, exc_min, width_min, height_min],
-        'x pop upper limit': [pres_max, exc_max, width_min, height_max],
-        'none variable': variaveis_proj,
-        'objective function': obj_ic_jack_priscilla,
-        'algorithm parameters': {
-                                'selection': {'type': 'roulette'},
-                                'crossover': {'crossover rate (%)': 82, 'type':'linear'},
-                                'mutation': {'mutation rate (%)': 12, 'type': 'hill climbing', 'cov (%)': 15, 'pdf': 'gaussian'},
-                                }
-    }
-    
-    results = []
-
-    general_setup = {   
-                'number of repetitions': 30,
-                'type code': 'real code',
-                'initial pop. seed': [None] * 30,
-                'algorithm': 'genetic_algorithm_01',
-            }
-    
-    df_all_reps, df_resume_all_reps, reports, status = metaheuristic_optimizer(algorithm_setup, general_setup)
-    st.write(df_all_reps[status])
-    print(df_resume_all_reps[status])
-    best_result_row = df_resume_all_reps[status].iloc[-1]
-    of, g = new_obj_ic_jack_priscilla([best_result_row['X_0_BEST'], 
-                                    best_result_row['X_1_BEST'], 
-                                    best_result_row['X_2_BEST'], 
-                                    best_result_row['X_3_BEST']], 
-                                    variaveis_proj)
-    result = ({
-        'lambda': 0.5,
-        'X_0_BEST': best_result_row['X_0_BEST'],
-        'X_1_BEST': best_result_row['X_1_BEST'],
-        'X_2_BEST': best_result_row['X_2_BEST'],
-        'X_3_BEST': best_result_row['X_3_BEST'],
-        'OF_0': of[0],
-        'OF_1': of[1]
-    })
-    for i, g_value in enumerate(g):
-        result[f'G_{i}'] = g_value
-
-    results.append(result)
-
-    df_results = pd.DataFrame(results)
-    st.write(df_results)
-    
-    # Data
-    df = { 
-            'x0': df_results['OF_0'],
-            'y0': df_results['OF_1'],
+        variaveis_proj = {
+            'g (kN/m)': g,
+            'q (kN/m)': q,
+            'l (m)': l,
+            'tipo de seção': 'retangular',
+            'tipo de protensão': 'Parcial',
+            'fck,ato (kPa)': f_c * 1E3,
+            'fck (kPa)': f_cj * 1E3,
+            'lambda': 0.5,
+            'penalidade': 1E6,
+            'fator de fluência': 2.5,
+            'flecha limite de fabrica (m)': 7/1000,
+            'flecha limite de serviço (m)': 7/250
         }
 
-    # Chart setup
-    chart_config = {
-                    'name': 'figure1-3-1',
-                    'width': 16, 
-                    'height': 8,
-                    'dots_per_inch': 600, 
-                    'extension': 'svg',
-                    'marker_size': [20],
-                    'color_map': ['red', 'blue'],
-                    'x_axis_label': 'Weight',
-                    'x_axis_size': 10,
-                    'y_axis_label': 'Height',
-                    'y_axis_size': 10,
-                    'axises_color': 'red', 
-                    'labels_size': 10,
-                    'labels_color': 'blue',
-                    'on_grid': False,
-                    'y_log': False,
-                    'x_log': False,
-                    'legend': [None],
-                    'legend_location': None,
-                    'size_legend': 12,
-                }
+        algorithm_setup = {
+            'number of iterations': int(interations),
+            'number of population': int(pop_size),
+            'number of dimensions': 4,
+            'x pop lower limit': [pres_min, exc_min, width_min, height_min],
+            'x pop upper limit': [pres_max, exc_max, width_min, height_max],
+            'none variable': variaveis_proj,
+            'objective function': obj_ic_jack_priscilla,
+            'algorithm parameters': {
+                                    'selection': {'type': 'roulette'},
+                                    'crossover': {'crossover rate (%)': 82, 'type':'linear'},
+                                    'mutation': {'mutation rate (%)': 12, 'type': 'hill climbing', 'cov (%)': 15, 'pdf': 'gaussian'},
+                                    }
+        }
+        
+        results = []
 
-    # Call function
-    st.pyplot(scatter_chart(dataset=df, plot_setup=chart_config))
+        general_setup = {   
+                    'number of repetitions': 30,
+                    'type code': 'real code',
+                    'initial pop. seed': [None] * 30,
+                    'algorithm': 'genetic_algorithm_01',
+                }
+        
+        df_all_reps, df_resume_all_reps, reports, status = metaheuristic_optimizer(algorithm_setup, general_setup)
+        st.write(df_all_reps[status])
+        print(df_resume_all_reps[status])
+        best_result_row = df_resume_all_reps[status].iloc[-1]
+        of, g = new_obj_ic_jack_priscilla([best_result_row['X_0_BEST'], 
+                                        best_result_row['X_1_BEST'], 
+                                        best_result_row['X_2_BEST'], 
+                                        best_result_row['X_3_BEST']], 
+                                        variaveis_proj)
+        result = ({
+            'lambda': 0.5,
+            'X_0_BEST': best_result_row['X_0_BEST'],
+            'X_1_BEST': best_result_row['X_1_BEST'],
+            'X_2_BEST': best_result_row['X_2_BEST'],
+            'X_3_BEST': best_result_row['X_3_BEST'],
+            'OF_0': of[0],
+            'OF_1': of[1]
+        })
+        for i, g_value in enumerate(g):
+            result[f'G_{i}'] = g_value
+
+        results.append(result)
+
+        df_results = pd.DataFrame(results)
+        st.write(df_results)
+        
+        # Data
+        df = { 
+                'x0': df_results['OF_0'],
+                'y0': df_results['OF_1'],
+            }
+
+        # Chart setup
+        chart_config = {
+                        'name': 'figure1-3-1',
+                        'width': 16, 
+                        'height': 8,
+                        'dots_per_inch': 600, 
+                        'extension': 'svg',
+                        'marker_size': [20],
+                        'color_map': ['red', 'blue'],
+                        'x_axis_label': 'Weight',
+                        'x_axis_size': 10,
+                        'y_axis_label': 'Height',
+                        'y_axis_size': 10,
+                        'axises_color': 'red', 
+                        'labels_size': 10,
+                        'labels_color': 'blue',
+                        'on_grid': False,
+                        'y_log': False,
+                        'x_log': False,
+                        'legend': [None],
+                        'legend_location': None,
+                        'size_legend': 12,
+                    }
+
+        # Call function
+        st.pyplot(scatter_chart(dataset=df, plot_setup=chart_config))
