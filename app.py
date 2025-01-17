@@ -1,6 +1,7 @@
 from protendido import obj_ic_jack_priscilla, new_obj_ic_jack_priscilla
 from metapy_toolbox import metaheuristic_optimizer
 from easyplot_toolbox import line_chart, histogram_chart, scatter_chart, bar_chart
+from io import BytesIO
 
 import streamlit as st
 import pandas as pd
@@ -59,7 +60,7 @@ def monte_carlo(g, q, l, f_c, f_cj, iterations, pop_size, pres_min, pres_max, ex
     e_p = [exc_min, exc_max]
     bw = [width_min, width_max]
     h = [height_min, height_max]
-    n = 10000
+    n = int(pop_size)
 
     if st.button("Run Simulation"):
         st.write("Running Simulation...")
@@ -120,6 +121,20 @@ def monte_carlo(g, q, l, f_c, f_cj, iterations, pop_size, pres_min, pres_max, ex
 
         # Mostrar as primeiras 10 linhas para verificar se as linhas foram removidas
         st.table(df.head(10))  # Exibe as primeiras 10 linhas
+
+        # Salvando a planilha em um buffer (BytesIO)
+        towrite = BytesIO()
+        with pd.ExcelWriter(towrite, engine="xlsxwriter") as writer:
+            df.to_excel(writer, index=False, sheet_name="Simulação")
+
+        towrite.seek(0)  
+
+        st.download_button(
+            label="Baixar Planilha Excel",
+            data=towrite,
+            file_name="simulacao_monte_carlo.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
 
         # Plotar gráfico de dispersão (scatter plot)
         fix, ax = plt.subplots()

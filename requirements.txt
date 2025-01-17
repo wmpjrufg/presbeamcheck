@@ -7,3 +7,4 @@ easyplot-toolbox
 scikit-learn
 ipykernel
 streamlit
+xlsxwriter
