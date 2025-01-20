@@ -109,7 +109,6 @@ def monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_m
 
         # Grafico com o rendimento
         df = df[(df[[col for col in df.columns if col.startswith('g_')]] <= 0).all(axis=1)]
-
         df.reset_index(drop=True, inplace=True)
         st.subheader("Simulation results")
         st.table(df.head(10)) 
