@@ -74,9 +74,7 @@ def monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_m
 
         a_c_list = []
         r_list = []
-        g_0_list = []
-        g_1_list = []
-        g_2_list = []
+        g_lists = []
 
         fixed_variables = {
                         'g (kN/m)': g,
@@ -92,31 +90,30 @@ def monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_m
                         'flecha limite de fabrica (m)': 7/1000,
                         'flecha limite de serviço (m)': 7/250,
                     }
-        
+
+
         for i, row in df.iterrows():
             of, g = new_obj_ic_jack_priscilla([row['p (kN)'], row['e_p (m)'], row['bw (m)'], row['h (m)']], fixed_variables)
-            
             a_c_list.append(of[0])
             r_list.append(of[1])
-            g_0_list.append(g[0])
-            g_1_list.append(g[1])
-            g_2_list.append(g[2])
+            g_lists.append(g)
 
 
         df['a_c (m²)'] = a_c_list
         df['r'] = r_list
-        df['g_0'] = g_0_list
-        df['g_1'] = g_1_list
-        df['g_2'] = g_2_list
+
+        for idx, g_list in enumerate(zip(*g_lists)):
+            df[f'g_{idx}'] = g_list
+
         df = pd.DataFrame(df)
 
         # Grafico com o rendimento
         df = df[(df[[col for col in df.columns if col.startswith('g_')]] <= 0).all(axis=1)]
 
-        # Mostrar as primeiras 10 linhas para verificar se as linhas foram removidas
         df.reset_index(drop=True, inplace=True)
         st.subheader("Simulation results")
-        st.table(df.head(10))  # Exibe as primeiras 10 linhas
+        st.table(df.head(10)) 
+
 
         # Salvando a planilha em um buffer (BytesIO)
         towrite = BytesIO()
