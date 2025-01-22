@@ -21,8 +21,8 @@ def ag(g, q, l, f_c, f_cj, iterations, pop_size, pres_min, pres_max, exc_min, ex
                 'lambda': 0.5,
                 'penalidade': 1E6,
                 'fator de fluência': 2.5,
-                'flecha limite de fabrica (m)': 7/1000,
-                'flecha limite de serviço (m)': 7/250
+                'flecha limite de fabrica (m)': l/1000,
+                'flecha limite de serviço (m)': l/250
             }
 
             algorithm_setup = {
@@ -68,7 +68,6 @@ def monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_m
         e_p_samples = list(np.random.uniform(e_p[0], e_p[1], n))
         bw_samples = list(np.random.uniform(bw[0], bw[1], n))
         h_samples = list(np.random.uniform(h[0], h[1], n))
-
         df = {'p (kN)': p_samples, 'e_p (m)': e_p_samples, 'bw (m)': bw_samples, 'h (m)': h_samples}
         df = pd.DataFrame(df)
 
@@ -84,11 +83,9 @@ def monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_m
                         'tipo de protensão': 'Parcial',
                         'fck,ato (kPa)': f_c * 1E3,
                         'fck (kPa)': f_cj * 1E3,
-                        'lambda': 0.5,
-                        'penalidade': 1E6,
                         'fator de fluência': 2.5,
-                        'flecha limite de fabrica (m)': 7/1000,
-                        'flecha limite de serviço (m)': 7/250,
+                        'flecha limite de fabrica (m)': l/1000,
+                        'flecha limite de serviço (m)': l/250,
                     }
 
 

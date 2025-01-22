@@ -469,8 +469,6 @@ def new_obj_ic_jack_priscilla(x: float, none_variable: Any) -> tuple[list, list]
     tipo_protensao = none_variable['tipo de protensão']
     f_ck_ato = none_variable['fck,ato (kPa)']
     f_ck = none_variable['fck (kPa)']
-    lambdaa = none_variable['lambda']
-    rp = none_variable['penalidade']
     phi = none_variable['fator de fluência']
     delta_lim_fabrica = none_variable['flecha limite de fabrica (m)']
     delta_lim_serv = none_variable['flecha limite de serviço (m)']
@@ -482,7 +480,6 @@ def new_obj_ic_jack_priscilla(x: float, none_variable: Any) -> tuple[list, list]
     # Propriedades geométricas
     # Problema retangular
     a_c, y_t, y_b, i_c, w_t, w_b = propriedades_geometricas([b_w, h], tipo)
-    rig = rigidez(l, e_cs, i_c)
 
     # Esforços
     m_gext, _ = esforcos_bi_apoiada(g_ext, l)
@@ -614,132 +611,3 @@ def new_obj_ic_jack_priscilla(x: float, none_variable: Any) -> tuple[list, list]
     g.append((l / 50) / b_w - 1)
 
     return of, g
-
-
-# def multi_obj_0(x, none_variable):
-#     x_0 = x[0]
-#     of_0 = x_0 ** 2
-#     of_1 = (x_0 - 2) ** 2
-#     lambdaa = none_variable['lambda']
-#     of = lambdaa * of_0 + (1 - lambdaa) * of_1
-#     return of
-
-
-# def new_multi_obj_0(x, none_variable):
-#     x_0 = x[0]
-#     of_0 = x_0 ** 2
-#     of_1 = (x_0 - 2) ** 2
-#     of = [of_0, of_1]
-#     return of
-
-
-# def multi_obj_1(x, none_variable):
-#     x_0 = x[0]
-#     x_1 = x[1]
-#     x_2 = x[2]
-
-#     of_0 = -10 * np.exp(-0.2 * np.sqrt(x_0**2 + x_1**2)) \
-#            -10 * np.exp(-0.2 * np.sqrt(x_1**2 + x_2**2))
-    
-#     of_1 = (abs(x_0)**0.8 + 5 * np.sin(x_0**3)) + \
-#            (abs(x_1)**0.8 + 5 * np.sin(x_1**3)) + \
-#            (abs(x_2)**0.8 + 5 * np.sin(x_2**3))
-
-#     lambdaa = none_variable['lambda']
-#     of = lambdaa * of_0 + (1 - lambdaa) * of_1
-#     return of
-
-
-# def new_multi_obj_1(x, none_variable):
-#     x_0 = x[0]
-#     x_1 = x[1]
-#     x_2 = x[2]
-
-#     of_0 = -10 * np.exp(-0.2 * np.sqrt(x_0**2 + x_1**2)) \
-#            -10 * np.exp(-0.2 * np.sqrt(x_1**2 + x_2**2))
-    
-#     of_1 = (abs(x_0)**0.8 + 5 * np.sin(x_0**3)) + \
-#            (abs(x_1)**0.8 + 5 * np.sin(x_1**3)) + \
-#            (abs(x_2)**0.8 + 5 * np.sin(x_2**3))
-
-#     of = [of_0, of_1]
-#     return of
-
-
-# def multi_obj_2(x, none_variable):
-#     const = 1 / np.sqrt(len(x))
-#     of_0 = 1 - np.exp(-sum((x_i - const)**2 for x_i in x))
-#     of_1 = 1 - np.exp(-sum((x_i + const)**2 for x_i in x))
-
-#     lambdaa = none_variable['lambda']
-#     of = lambdaa * of_0 + (1 - lambdaa) * of_1
-#     return of
-
-
-# def new_multi_obj_2(x, none_variable):
-#     const = 1 / np.sqrt(len(x))
-#     of_0 = 1 - np.exp(-sum((x_i - const)**2 for x_i in x))
-#     of_1 = 1 - np.exp(-sum((x_i + const)**2 for x_i in x))
-
-#     of = [of_0, of_1]
-#     return of
-
-p = 408
-e_p = 0.319
-b_w = 0.20
-h = 0.85
-variaveis_proj = {
-                        'g (kN/m)': 10.75,
-                        'q (kN/m)': 5.00,
-                        'l (m)': 12,
-                        'tipo de seção': 'retangular',
-                        'tipo de protensão': 'Parcial',
-                        'fck,ato (kPa)': 24.56E3,
-                        'fck (kPa)': 30E3,
-                        'lambda': 0.50,
-                        'penalidade': 1E6,
-                        'fator de fluência': 2.5,
-                        'flecha limite de fabrica (m)': 12/1000,
-                        'flecha limite de serviço (m)': 12/250
-                    }
-obj_ic_jack_priscilla([p, e_p, b_w, h], variaveis_proj)
-
-# if __name__ == '__main__':
-
-#     p = 423.20
-#     e_p = 0.319
-#     b_w = 0.20
-#     h = 0.80
-#     propriedades_geometricas([b_w, h], 'retangular')
-#     # b_w = 1.77
-#     # h = 1.77
-#     # l = 7.00
-#     # lam=0.01
-#     # tipo = 'retangular'
-#     # e_ci, e_cs, _, _ = modulo_elasticidade_concreto('gra', 50000, 21000, True)
-#     # print(resistencia_concreto(50000, 21000, True))
-#     # a_c, y_t, y_b, i_c, w_t, w_b = propriedades_geometricas([b_w, h], tipo)    
-#     # rig = rigidez(l, e_cs, i_c)
-#     # print(a_c, rig)
-#     # print(lam*a_c/4+(1-lam)*rig/6834403.501427528)
-#     # variaveis_proj = {
-#     #                     'g (kN/m)': 7.5,
-#     #                     'q (kN/m)': 7.5,
-#     #                     'l (m)': 7,
-#     #                     'tipo de seção': 'retangular',
-#     #                     'tipo de protensão': 'Parcial',
-#     #                     'fck,ato (kPa)': 21E3,
-#     #                     'fck (kPa)': 50E3,
-#     #                     'lambda': 0.5,
-#     #                     'penalidade': 1E6,
-#     #                     'fator de fluência inicial': 0.5,
-#     #                     'fator de fluência final': 2.5,
-#     #                     'flecha limite de fabrica (m)': 0.003,
-#     #                     'flecha limite de serviço (m)': 0.005
-#     #                 }
-#     # print(obj_ic_jack_priscilla([1, 1, 1, 1], variaveis_proj))
-#     # g_ext = 10.75
-#     # e_p = 0.319
-#     # p = 423.20
-#     # l = 12.0
-#     # print(grau_protensao_ii(e_p, 0.20*0.85, g_ext, p, l))
