@@ -221,12 +221,12 @@ def change_language(lang):
 if __name__ == "__main__":
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("🇧🇷 Português"):
+        if st.button("&#127463;&#127479; Português"):  # 🇧🇷
             lang = "pt"
         else:
             lang = "en"
     with col2:
-        if st.button("🇬🇧 English"):
+        if st.button("&#127468;&#127463; English"):  # 🇬🇧
             lang = "en"
 
     texts = change_language(lang)
