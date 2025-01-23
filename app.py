@@ -163,58 +163,103 @@ def monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_m
         st.pyplot(fix)
 
 
+# Função para alterar o idioma
+def change_language(lang):
+    if lang == "en":
+        return {
+            "title": "Prestressed Beam Check Routine",
+            "description": """This app checks a simple supported beam subject to one dead and live load. 
+                              The user needs to fill in a project variables interval (prestressed load, eccentricity, width, and height). 
+                              The algorithm checks linear stress when a prestressed load is introduced in the beam, and it also checks 
+                              linear stress in service and the geometric constraints of ABNT NBR 6118.""",
+            "model_label": "Select Model",
+            "dead_load": "Dead load (kN/m)",
+            "live_load": "Live load (kN/m)",
+            "beam_length": "Beam length (m)",
+            "fc": "fc (MPa)",
+            "fcj": "fcj (MPa)",
+            "algorithm_setup": "Algorithm Setup",
+            "iterations": "Number of iterations",
+            "prestressed_min": "Prestressed minimum",
+            "eccentricity_min": "Eccentricity minimum",
+            "width_min": "Width minimum",
+            "height_min": "Height minimum",
+            "population_size": "Population size",
+            "prestressed_max": "Prestressed maximum",
+            "eccentricity_max": "Eccentricity maximum",
+            "width_max": "Width maximum",
+            "height_max": "Height maximum",
+            "samples": "Number of samples"
+        }
+    else:  # pt
+        return {
+            "title": "Rotina de Verificação de Viga Protendida",
+            "description": """Este aplicativo verifica uma viga biapoiada sujeita a uma carga permanente e acidental. 
+                              O usuário precisa preencher o intervalo das variáveis do projeto (carga protendida, excentricidade, largura e altura). 
+                              O algoritmo verifica a tensão linear quando a carga protendida é introduzida na viga, e também verifica 
+                              a tensão linear em serviço e as restrições geométricas da ABNT NBR 6118.""",
+            "model_label": "Selecione o Modelo",
+            "dead_load": "Carga permanente (kN/m)",
+            "live_load": "Carga acidental (kN/m)",
+            "beam_length": "Comprimento da viga (m)",
+            "fc": "fck (MPa)",
+            "fcj": "fcj (MPa)",
+            "algorithm_setup": "Configuração do Algoritmo",
+            "iterations": "Número de iterações",
+            "prestressed_min": "Carga protendida mínima",
+            "eccentricity_min": "Excentricidade mínima",
+            "width_min": "Largura mínima",
+            "height_min": "Altura mínima",
+            "population_size": "Tamanho da população",
+            "prestressed_max": "Carga protendida máxima",
+            "eccentricity_max": "Excentricidade máxima",
+            "width_max": "Largura máxima",
+            "height_max": "Altura máxima",
+            "samples": "Número de amostras"
+        }
+
 if __name__ == "__main__":
-    st.title("Prestressed Beam Check Routine")
-    st.write("""This app checks a simple supported beam subject to one dead and live load. The user needs to fill in a project variables interval 
-                (prestressed load, eccentricity, width, and height). The algorithm checks linear stress when a prestressed load is introduced in the beam, 
-                and it also checks linear stress in service and the geometric constraints of ABNT NBR 6118.""") 
-                
-    
-    # model = st.radio('Select Model', ['AG', 'Monte Carlo'])
-    model = st.radio('Select Model', ['Monte Carlo'])
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🇧🇷 Português"):
+            lang = "pt"
+        else:
+            lang = "en"
+    with col2:
+        if st.button("🇬🇧 English"):
+            lang = "en"
 
-    g = st.number_input('Dead load (kN/m)', value=None)
-    q = st.number_input('Live load (kN/m)', value=None)
-    l = st.number_input('Beam load (m)', value=None)
-    f_c = st.number_input('fc (MPa)', value=None)
-    f_cj = st.number_input('fcj (MPa)', value=None)
+    texts = change_language(lang)
+    st.title(texts["title"])
+    st.write(texts["description"])
 
-    st.subheader("Algorithm Setup")
+    # Seleção de modelo
+    model = st.radio(texts["model_label"], ['Monte Carlo'])
 
-    if model == 'AG':
+    # Entradas principais
+    g = st.number_input(texts["dead_load"], value=None)
+    q = st.number_input(texts["live_load"], value=None)
+    l = st.number_input(texts["beam_length"], value=None)
+    f_c = st.number_input(texts["fc"], value=None)
+    f_cj = st.number_input(texts["fcj"], value=None)
+
+    st.subheader(texts["algorithm_setup"])
+
+    if model == 'Monte Carlo':
         col1, col2 = st.columns(2)
 
         with col1:
-            iterations = st.number_input('Number of iterations', value=None)
-            pres_min = st.number_input('Prestressed minimum', value=None)
-            exc_min = st.number_input('Excentricity minimum', value=None)
-            width_min = st.number_input('Width minimum', value=None)
-            height_min = st.number_input('Height minimum', value=None)
-                
+            pres_min = st.number_input(texts["prestressed_min"], value=None)
+            exc_min = st.number_input(texts["eccentricity_min"], value=None)
+            width_min = st.number_input(texts["width_min"], value=None)
+            height_min = st.number_input(texts["height_min"], value=None)
+            pop_size = st.number_input(texts["samples"], value=None)
 
         with col2:
-            pop_size = st.number_input('Population size', value=None)
-            pres_max = st.number_input('Prestressed maximum', value=None)
-            exc_max = st.number_input('Excentricity maximum', value=None)
-            width_max = st.number_input('Width maximum', value=None)
-            height_max = st.number_input('Height maximum', value=None)
-            
-        ag(g, q, l, f_c, f_cj, iterations, pop_size, pres_min, pres_max, exc_min, exc_max, width_min, width_max, height_min, height_max)
+            pres_max = st.number_input(texts["prestressed_max"], value=None)
+            exc_max = st.number_input(texts["eccentricity_max"], value=None)
+            width_max = st.number_input(texts["width_max"], value=None)
+            height_max = st.number_input(texts["height_max"], value=None)
 
-    elif model == 'Monte Carlo':
-        col1, col2 = st.columns(2)
-
-        with col1:
-            pres_min = st.number_input('Prestressed minimum', value=None)
-            exc_min = st.number_input('Excentricity minimum', value=None)
-            width_min = st.number_input('Width minimum', value=None)
-            height_min = st.number_input('Height minimum', value=None)
-            pop_size = st.number_input('Number of samples', value=None)
-                
-        with col2:
-            pres_max = st.number_input('Prestressed maximum', value=None)
-            exc_max = st.number_input('Excentricity maximum', value=None)
-            width_max = st.number_input('Width maximum', value=None)
-            height_max = st.number_input('Height maximum', value=None)
-
+        # Função de Monte Carlo
         monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_max, width_min, width_max, height_min, height_max)
