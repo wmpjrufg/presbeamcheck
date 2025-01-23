@@ -164,13 +164,14 @@ def monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_m
 
 
 if __name__ == "__main__":
-    st.title("Title")
-    st.subheader("Project Variables")
-    st.write("""Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam id suscipit mauris. Etiam ultricies tellus at lobortis posuere. Nulla a eros id lacus finibus imperdiet nec nec risus. 
-                Nam eget placerat justo, vitae molestie lorem. Donec lacus nisl, fringilla ac risus eu, egestas dapibus turpis. Pellentesque faucibus volutpat nibh sed tempus. Nulla pulvinar mattis rhoncus.""") 
+    st.title("Prestressed Beam Check Routine")
+    st.write("""This app checks a simple supported beam subject to one dead and live load. The user needs to fill in a project variables interval 
+                (prestressed load, eccentricity, width, and height). The algorithm checks linear stress when a prestressed load is introduced in the beam, 
+                and it also checks linear stress in service and the geometric constraints of ABNT NBR 6118.""") 
                 
     
-    model = st.radio('Select Model', ['AG', 'Monte Carlo'])
+    # model = st.radio('Select Model', ['AG', 'Monte Carlo'])
+    model = st.radio('Select Model', ['Monte Carlo'])
 
     g = st.number_input('Dead load (kN/m)', value=None)
     q = st.number_input('Live load (kN/m)', value=None)
