@@ -445,7 +445,7 @@ def obj_ic_jack_priscilla(x: float, none_variable: Any):
     return of
 
 
-def new_obj_ic_jack_priscilla(x: float, none_variable: Any) -> tuple[list, list]:
+def new_obj_ic_jack_priscilla(x: float, none_variable: Any):
     """
     Esta função determina o valor da função pseudoobjetivo.
 
@@ -472,6 +472,9 @@ def new_obj_ic_jack_priscilla(x: float, none_variable: Any) -> tuple[list, list]
     phi = none_variable['fator de fluência']
     delta_lim_fabrica = none_variable['flecha limite de fabrica (m)']
     delta_lim_serv = none_variable['flecha limite de serviço (m)']
+    phi_els = none_variable['coeficiente parcial para carga q']
+    perda_inicial = none_variable['perda inicial de protensão (%)'] / 100
+    perda_total = none_variable['perda total de protensão (%)'] / 100
 
     # Propriedades do material
     e_ci, e_cs, e_ci_ato, e_cs_ato = modulo_elasticidade_concreto('gra', f_ck, f_ck_ato, False)
@@ -487,14 +490,14 @@ def new_obj_ic_jack_priscilla(x: float, none_variable: Any) -> tuple[list, list]
     g_pp = a_c * 25
     m_gpp, _ = esforcos_bi_apoiada(g_pp, l)
     m_sdato = 1.00 * (m_gpp)
-    m_sdserv = 1.00 * (m_gext + 0.6 * m_q)
+    m_sdserv = 1.00 * (m_gext + phi_els * m_q)
 
     kappa_p = grau_protensao_ii(e_p, a_c, g_ext, p, l)
 
     of = [a_c, kappa_p]
 
     # Tensão no topo e na base na transferência da protensão considerando que as perdas de protensão são de 5%
-    p_sd_ato = 1.10 * (0.95 * p)
+    p_sd_ato = 1.10 * ((1 - perda_inicial) * p)
     m_psd_ato = p_sd_ato * e_p
     sigma_t_ato_mv = (p_sd_ato / a_c) - (p_sd_ato * e_p / w_t) + (m_sdato / w_t)
     sigma_t_ato_ap = (p_sd_ato / a_c) - (p_sd_ato * e_p / w_t)
@@ -520,94 +523,68 @@ def new_obj_ic_jack_priscilla(x: float, none_variable: Any) -> tuple[list, list]
         sigma_max = sigma_max_trac
     else:
         sigma_max = sigma_max_comp
-    g.append(sigma_t_ato_mv / sigma_max - 1)
+    g.append(sigma_t_ato_mv / sigma_max - 1) # g_0
 
     if sigma_t_ato_ap < 0:
         sigma_t_ato_ap = abs(sigma_t_ato_ap)
         sigma_max = sigma_max_trac
     else:
         sigma_max = sigma_max_comp
-    g.append(sigma_t_ato_ap / sigma_max - 1)
+    g.append(sigma_t_ato_ap / sigma_max - 1) # g_1
 
     if sigma_b_ato_mv < 0:
         sigma_b_ato_mv = abs(sigma_b_ato_mv)
         sigma_max = sigma_max_trac
     else:
         sigma_max = sigma_max_comp
-    g.append(sigma_b_ato_mv / sigma_max - 1)
+    g.append(sigma_b_ato_mv / sigma_max - 1) # g_2
 
     if sigma_b_ato_ap < 0:
         sigma_b_ato_ap = abs(sigma_b_ato_ap)
         sigma_max = sigma_max_trac
     else:
         sigma_max = sigma_max_comp
-    g.append(sigma_b_ato_ap / sigma_max - 1)
+    g.append(sigma_b_ato_ap / sigma_max - 1) # g_3
 
     # Tensão no topo e na base considerando que as perdas de protensão são de 20%
-    p_sd_serv = 1.10 * (0.80 * p)
+    p_sd_serv = 1.10 * ((1 - perda_total) * p)
     sigma_t_ato_mv_serv = (p_sd_serv / a_c) - (p_sd_serv * e_p / w_t) + (m_sdato / w_t) + (m_sdserv / w_t)
-    sigma_t_ato_ap_serv = (p_sd_serv / a_c) - (p_sd_serv * e_p / w_t)
     sigma_b_ato_mv_serv = (p_sd_serv / a_c) + (p_sd_serv * e_p / w_b) - (m_sdato / w_b) - (m_sdserv / w_b)
-    sigma_b_ato_ap_serv = (p_sd_serv / a_c) + (p_sd_serv * e_p / w_b)
+
 
     # Limites de tensão com base no tipo de protensão
     if tipo_protensao == "Parcial":
-        sigma_max_trac = 4.00 * f_ctm
         sigma_max_comp = 0.60 * f_ck
 
     # Cálculos da equação de estado limite para tensões elásticas no topo da seção
-    if sigma_t_ato_mv_serv  < 0:
-        sigma_t_ato_mv_serv  = abs(sigma_t_ato_mv_serv)
-        sigma_max = sigma_max_trac
-    else:
-        sigma_max = sigma_max_comp
-    g.append(sigma_t_ato_mv_serv  / sigma_max - 1)
-
-    if sigma_t_ato_ap_serv < 0:
-        sigma_t_ato_ap_serv = abs(sigma_t_ato_ap_serv)
-        sigma_max = sigma_max_trac
-    else:
-        sigma_max = sigma_max_comp
-    g.append(sigma_t_ato_ap_serv / sigma_max - 1)
-
-    if sigma_b_ato_mv_serv < 0:
-        sigma_b_ato_mv_serv = abs(sigma_b_ato_mv_serv)
-        sigma_max = sigma_max_trac
-    else:
-        sigma_max = sigma_max_comp
-    g.append(sigma_b_ato_mv_serv / sigma_max - 1)
-
-    if sigma_b_ato_ap_serv < 0:
-        sigma_b_ato_ap_serv = abs(sigma_b_ato_ap_serv)
-        sigma_max = sigma_max_trac
-    else:
-        sigma_max = sigma_max_comp
-    g.append(sigma_b_ato_ap_serv / sigma_max - 1)
+    g.append(-sigma_t_ato_mv_serv  / sigma_max_comp)    # g_4
+    g.append(sigma_t_ato_mv_serv  / sigma_max_comp - 1) # g_5
+    g.append(sigma_b_ato_mv_serv  / sigma_max_comp)     # g_6
 
     # Restrição de flecha no ato
     delta_ato_0 = flecha_biapoiada_carga_distribuida(l, e_cs_ato, i_c, g_pp)
     delta_ato_1 = flecha_biapoiada_carga_protensao(l, e_cs_ato, i_c, m_psd_ato)
     delta_ato = delta_ato_0 + (-delta_ato_1)
-    g.append(np.abs(delta_ato) / delta_lim_fabrica - 1)
+    g.append(np.abs(delta_ato) / delta_lim_fabrica - 1) # g_7
 
     # Restrição de flecha no serviço
     delta_serv_0 = flecha_biapoiada_carga_distribuida(l, e_cs, i_c, g_ext)
-    delta_serv_1 = flecha_biapoiada_carga_distribuida(l, e_cs, i_c, 0.6 * q)
-    g.append((delta_ato + phi * (delta_serv_0 + delta_serv_1)) / delta_lim_serv - 1)
+    delta_serv_1 = flecha_biapoiada_carga_distribuida(l, e_cs, i_c, phi_els * q)
+    g.append((delta_ato + phi * (delta_serv_0 + delta_serv_1)) / delta_lim_serv - 1) # g_8
 
     # # Restrição de flecha inicial
     # g.append(delta_lim_serv * 0.25 / (phi * delta_ato + phi * delta_serv_0 + delta_serv_1) - 1)
 
     # Restrição construtiva
-    g.append(e_p / (0.90 * 0.50 * h)  - 1)
+    g.append(e_p / (0.90 * 0.50 * h)  - 1) #g_9
 
     # Restrição de esbeltez 18.3.1
-    g.append(2 / (l / h) - 1)
-    
+    g.append(2 / (l / h) - 1) #g_10
+
     # Restrição de largura máxima
-    g.append(b_w / (h * 0.50) - 1)
+    g.append(b_w / (h * 0.50) - 1) #g_11
 
     # Restrição de instabilidade 15.10
-    g.append((l / 50) / b_w - 1)
+    g.append((l / 50) / b_w - 1) #g_12
 
     return of, g

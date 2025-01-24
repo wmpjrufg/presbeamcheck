@@ -76,26 +76,27 @@ def monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_m
         g_lists = []
 
         fixed_variables = {
-                        'g (kN/m)': g,
-                        'q (kN/m)': q,
-                        'l (m)': l,
-                        'tipo de seção': 'retangular',
-                        'tipo de protensão': 'Parcial',
-                        'fck,ato (kPa)': f_c * 1E3,
-                        'fck (kPa)': f_cj * 1E3,
-                        'fator de fluência': 2.5,
-                        'flecha limite de fabrica (m)': l/1000,
-                        'flecha limite de serviço (m)': l/250,
-                    }
+                            'g (kN/m)': g,
+                            'q (kN/m)': q,
+                            'l (m)': l,
+                            'tipo de seção': 'retangular',
+                            'tipo de protensão': 'Parcial',
+                            'fck,ato (kPa)': f_cj * 1E3,
+                            'fck (kPa)': f_c * 1E3,
+                            'fator de fluência': 2.5,
+                            'flecha limite de fabrica (m)': l/1000,
+                            'flecha limite de serviço (m)': l/250,
+                            'coeficiente parcial para carga q': 0.60,
+                            'perda inicial de protensão (%)': 5,
+                            'perda total de protensão (%)': 20
+                          }
 
 
-        for i, row in df.iterrows():
+        for _, row in df.iterrows():
             of, g = new_obj_ic_jack_priscilla([row['p (kN)'], row['e_p (m)'], row['bw (m)'], row['h (m)']], fixed_variables)
             a_c_list.append(of[0])
             r_list.append(of[1])
             g_lists.append(g)
-
-
         df['a_c (m²)'] = a_c_list
         df['r'] = r_list
 
@@ -104,26 +105,22 @@ def monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_m
 
         df = pd.DataFrame(df)
 
-        # Grafico com o rendimento
         df = df[(df[[col for col in df.columns if col.startswith('g_')]] <= 0).all(axis=1)]
         df.reset_index(drop=True, inplace=True)
-        st.subheader("Simulation results")
-        st.table(df.head(10)) 
+        # st.subheader("Simulation results")
+        # st.table(df) 
 
-
-        # Salvando a planilha em um buffer (BytesIO)
-        towrite = BytesIO()
-        with pd.ExcelWriter(towrite, engine="xlsxwriter") as writer:
-            df.to_excel(writer, index=False, sheet_name="Simulação")
-
-        towrite.seek(0)  
-
-        st.download_button(
-            label="Download results",
-            data=towrite,
-            file_name="simulacao_monte_carlo.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+        # # Salvando a planilha em um buffer (BytesIO)
+        # towrite = BytesIO()
+        # with pd.ExcelWriter(towrite, engine="xlsxwriter") as writer:
+        #     df.to_excel(writer, index=False, sheet_name="Simulação")
+        # towrite.seek(0)  
+        # st.download_button(
+        #     label="Download results",
+        #     data=towrite,
+        #     file_name="simulacao_monte_carlo.xlsx",
+        #     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        # )
 
         # Plotar gráfico de dispersão e Pareto front
         fix, ax = plt.subplots()
@@ -134,11 +131,10 @@ def monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_m
             if row['r'] > max_r:
                 pareto_indices.append(idx)
                 max_r = row['r']
-
         pareto_df = df_sorted.loc[pareto_indices].reset_index(drop=True)
 
         st.subheader("Best solutions")
-        st.table(pareto_df.head(10)) 
+        st.table(pareto_df.head()) 
 
         towrite_pareto = BytesIO()
         with pd.ExcelWriter(towrite_pareto, engine="xlsxwriter") as writer:
@@ -157,13 +153,12 @@ def monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_m
         ax.scatter(df['a_c (m²)'], df['r'], color='blue', alpha=0.7)
         ax.plot(pareto_df['a_c (m²)'], pareto_df['r'], color='red', marker='o', linewidth=2)
         ax.set_title("Pareto front", fontsize=14)
-        ax.set_xlabel("Cross section [m²]", fontsize=12)
-        ax.set_ylabel("Obj 1 (r)", fontsize=12)
+        ax.set_xlabel("Cross section (m²)", fontsize=12)
+        ax.set_ylabel("Prestressed level", fontsize=12)
         ax.grid(True)
         st.pyplot(fix)
 
 
-# Função para alterar o idioma
 def change_language(lang):
     if lang == "en":
         return {
@@ -218,6 +213,7 @@ def change_language(lang):
             "samples": "Número de amostras"
         }
 
+
 if __name__ == "__main__":
     col1, col2 = st.columns(2)
     with col1:
@@ -263,3 +259,4 @@ if __name__ == "__main__":
 
         # Função de Monte Carlo
         monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_max, width_min, width_max, height_min, height_max)
+        
