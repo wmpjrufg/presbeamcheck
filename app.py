@@ -112,7 +112,7 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     results = []
 
     for iter_var, lambda_value in enumerate(lambda_list):
-        logger.info(f"Iteration {iter_var + 1}/{n_lambda} - lambda = {lambda_value:.4f}")
+        logger.info(f"Iteration {iter_var + 1}/{n_lambda}.")
 
         variaveis_proj = {
             'g (kN/m)': g_ext, 'q (kN/m)': q, 'l (m)': l, 'tipo de seção': 'retangular',
@@ -182,16 +182,16 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
 
     # Exibindo os resultados
     st.subheader("Resultados")
-    st.write(df_results)
+    st.write(df)
     st.pyplot(fig)
 
     towrite_pareto = BytesIO()
     with pd.ExcelWriter(towrite_pareto, engine="xlsxwriter") as writer:
-        df_results.to_excel(writer, index=False, sheet_name="Pareto Front")
+        df.to_excel(writer, index=False, sheet_name="Pareto Front")
 
     towrite_pareto.seek(0)
 
-    st.download_button("Baixar soluções", towrite_pareto, "ag_solutions.xlsx", 
+    st.download_button("Download Fronteira Eficiente", towrite_pareto, "fronteira_eficiente.xlsx", 
                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 
