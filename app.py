@@ -1,5 +1,5 @@
 from protendido import obj_ic_jack_priscilla, new_obj_ic_jack_priscilla
-from metapy_toolbox import metaheuristic_optimizer
+from metapy_toolbox import initial_population_01, genetic_algorithm_01
 import io
 from io import BytesIO
 import pandas as pd
@@ -41,41 +41,36 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     # handler = logging.StreamHandler(log_buffer)
     # formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
     # handler.setFormatter(formatter)
-    
     # logger = logging.getLogger()
     # logger.setLevel(logging.INFO)
     # logger.addHandler(handler)
-
     # # Placeholder para logs e barra de progresso
     # log_area = st.empty()
     # progress_bar = st.progress(0)
-
     # logger.info("Iniciando simulação de Monte Carlo...")
     
-    # Configuração inicial
-    n_lambda = 20      
-    n_length = 20000    
+    # Configuração de parâmetros para processamento monte carlo
+    n_lambda = 10      
+    n_length = 5000    
     p = [pres_min, pres_max]
     e_p = [exc_min, exc_max]
     bw = [width_min, width_max]
     h = [height_min, height_max]
     n = n_length
-
     np.random.seed(42)
     p_samples = np.random.uniform(p[0], p[1], n)
     e_p_samples = np.random.uniform(e_p[0], e_p[1], n)
     bw_samples = np.random.uniform(bw[0], bw[1], n)
     h_samples = np.random.uniform(h[0], h[1], n)
 
+    # Criação do dataframe
     df = pd.DataFrame({'p (kN)': p_samples, 'e_p (m)': e_p_samples, 'bw (m)': bw_samples, 'h (m)': h_samples})
-    
     a_c_list, r_list, rig_list, g_lists = [], [], [], []
-
     # logger.info(f"Processing samples...")
-
     # # Definir o intervalo para atualização
     # update_interval = 100  # Atualiza o progress bar a cada 100 iterações
 
+    # Iteração para avaliação de cada amostra
     for i, row in df.iterrows():
         fixed_variables = {
             'g (kN/m)': g_ext, 'q (kN/m)': q, 'l (m)': l, 'tipo de seção': 'retangular',
@@ -84,36 +79,38 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
             'flecha limite de serviço (m)': l/250, 'coeficiente parcial para carga q': psi,
             'perda inicial de protensão (%)': perda_inicial, 'perda total de protensão (%)': perda_final
         }
-
         of, g = new_obj_ic_jack_priscilla([row['p (kN)'], row['e_p (m)'], row['bw (m)'], row['h (m)']], fixed_variables)
         a_c_list.append(of[0])
         r_list.append(of[1])
         g_lists.append(g)
-
         # # Atualiza logs em tempo real a cada N iterações
         # if i % update_interval == 0:
         #     log_area.text_area("Logs", log_buffer.getvalue(), height=250, key=f"log_area_sample_{i}")
         #     progress_bar.progress((i + 1) / n_length)
-
     # # Atualiza uma última vez após o processamento
     # log_area.text_area("Logs", log_buffer.getvalue(), height=250, key=f"log_area_sample_final")
 
+    # Criação das colunas de restrições e função objetivo
     df['a_c (m²)'] = a_c_list
-    df['r'] = r_list
-
+    df['r (%)'] = r_list
     for idx, g_list in enumerate(zip(*g_lists)):
         df[f'g_{idx}'] = g_list
 
+    # Retirada do dataframe dos valores que não atendem as restrições
     df = df[(df[[col for col in df.columns if col.startswith('g_')]] <= 0).all(axis=1)].reset_index(drop=True)
 
+    # Prepação do modelo para o algoritmo genético
     ac_min, ac_max = df['a_c (m²)'].min(), df['a_c (m²)'].max()
 
+    # Lista de possíveis áreas para a busca multiobjetivo
     lambda_list = np.linspace(ac_min, ac_max, n_lambda)
     results = []
 
+    # Montando a fronteira eficiente
     for iter_var, lambda_value in enumerate(lambda_list):
         # logger.info(f"Iteration {iter_var + 1}/{n_lambda}.")
 
+        # Atribuição dos valores de entrada do AG
         variaveis_proj = {
             'g (kN/m)': g_ext, 'q (kN/m)': q, 'l (m)': l, 'tipo de seção': 'retangular',
             'fck,ato (kPa)': f_cj * 1E3, 'fck (kPa)': f_c * 1E3, 'lambda': lambda_value, 'rp': 1E6,
@@ -122,7 +119,6 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
             'coeficiente parcial para carga q': psi, 'perda inicial de protensão (%)': perda_inicial,
             'perda total de protensão (%)': perda_final
         }
-
         algorithm_setup = {
             'number of iterations': int(iterations),
             'number of population': int(pop_size),
@@ -138,29 +134,30 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
             }
         }
 
-        general_setup = {
-            'number of repetitions': 15, 'type code': 'real code',
-            'initial pop. seed': [None] * 15, 'algorithm': 'genetic_algorithm_01',
-        }
+        # Pop. inicial
+        init_pop = initial_population_01(algorithm_setup['number of population'],
+                                algorithm_setup['number of dimensions'],
+                                algorithm_setup['x pop lower limit'],
+                                algorithm_setup['x pop upper limit'])
 
-        df_all_reps, df_resume_all_reps, reports, status = metaheuristic_optimizer(algorithm_setup, general_setup)
-        best_result_row = df_resume_all_reps[status].iloc[-1]
+        # Execução do AG
+        settings = [algorithm_setup, init_pop, None]
+        _, df_resume, _, _ = genetic_algorithm_01(settings)
+        best_result_row = df_resume.iloc[-1]
 
+        # Avaliando as restriçõs do resultado best encontrado
         of, g = new_obj_ic_jack_priscilla([best_result_row['X_0_BEST'], 
                                            best_result_row['X_1_BEST'], 
                                            best_result_row['X_2_BEST'], 
                                            best_result_row['X_3_BEST']], variaveis_proj)
-
         result = {
             'lambda': lambda_value,
             'X_0_BEST': best_result_row['X_0_BEST'], 'X_1_BEST': best_result_row['X_1_BEST'],
             'X_2_BEST': best_result_row['X_2_BEST'], 'X_3_BEST': best_result_row['X_3_BEST'],
-            'OF_0': of[0], 'OF_1': of[1]
+            'a_c (m²)': of[0], 'r (%)': of[1]
         }
-
         for i, g_value in enumerate(g):
             result[f'G_{i}'] = g_value
-
         results.append(result)
 
     #     # Atualiza logs
@@ -169,28 +166,27 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
 
     # logger.info("Finished simulation")
 
+    # Salvando os resultados
     df_results = pd.DataFrame(results)
 
-    # Gerando a figura 
+    # Gerando a figura para tela
     fig, ax = plt.subplots()
-    ax.scatter(df_results['OF_0'], df_results['OF_1'], color='red', label='Fronteira eficiente')
-    ax.scatter(df['a_c (m²)'], df['r'], color='#dcdcdc', label='Monte Carlo')
-
+    ax.scatter(df_results['a_c (m²)'], df_results['r (%)'], color='red', label='Fronteira eficiente') # AG
+    ax.scatter(df['a_c (m²)'], df['r (%)'], color='#dcdcdc', label='Monte Carlo')                     # Monte Carlo
     ax.set_xlabel('Área da seção (m²)', fontsize=14)
     ax.set_ylabel('Carga $g$ estabilizada (%)', fontsize=14)
-    ax.legend()
+    ax.legend(loc='lower left')
 
     # Exibindo os resultados
     st.subheader("Resultados")
-    st.write(df)
+    st.write(df_results)
     st.pyplot(fig)
 
+    # Resultado em Excel
     towrite_pareto = BytesIO()
     with pd.ExcelWriter(towrite_pareto, engine="xlsxwriter") as writer:
-        df.to_excel(writer, index=False, sheet_name="Pareto Front")
-
+        df_results.to_excel(writer, index=False, sheet_name="Pareto Front")
     towrite_pareto.seek(0)
-
     st.download_button("Download Fronteira Eficiente", towrite_pareto, "fronteira_eficiente.xlsx", 
                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
@@ -391,5 +387,5 @@ elif model == "Ag":
         height_max = st.number_input(texts["height_max"], value=None)
 
     if st.button(texts["run_simulation"]):
-        print(f"Executando simulação com os parâmetros selecionados...")
+        #print(f"Executando simulação com os parâmetros selecionados...")
         ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, perda_final, iterations, pop_size, pres_min, pres_max, exc_min, exc_max, width_min, width_max, height_min, height_max)
