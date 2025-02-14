@@ -1,14 +1,58 @@
 from protendido import obj_ic_jack_priscilla, new_obj_ic_jack_priscilla
 from metapy_toolbox import metaheuristic_optimizer
+import io
 from io import BytesIO
 import pandas as pd
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 import json
+import logging
 
-def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, perda_final, iterations, pop_size, pres_min, pres_max, exc_min, exc_max, width_min, width_max, height_min, height_max):
-    import pandas as pd
+# Configuração do logger
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
+logger = logging.getLogger()
+
+# Criar um widget para exibir logs no Streamlit
+class StreamlitLogger:
+    def __init__(self):
+        self.logs = ""
+
+    def write(self, message):
+        if message.strip():
+            self.logs += message + "\n"
+            st.session_state.logs = self.logs
+
+    def flush(self):
+        pass
+
+if "logs" not in st.session_state:
+    st.session_state.logs = ""
+
+log_area = StreamlitLogger()
+
+
+def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, perda_final, 
+                   iterations, pop_size, pres_min, pres_max, exc_min, exc_max, 
+                   width_min, width_max, height_min, height_max):
+    
+    # Configuração do logger para capturar logs em tempo real
+    log_buffer = io.StringIO()
+    handler = logging.StreamHandler(log_buffer)
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    handler.setFormatter(formatter)
+    
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    logger.addHandler(handler)
+
+    # Placeholder para logs e barra de progresso
+    log_area = st.empty()
+    progress_bar = st.progress(0)
+
+    logger.info("Iniciando simulação de Monte Carlo...")
+    
+    # Configuração inicial
     n_lambda = 20      
     n_length = 20000    
     p = [pres_min, pres_max]
@@ -18,40 +62,41 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     n = n_length
 
     np.random.seed(42)
-    p_samples = list(np.random.uniform(p[0], p[1], n))
-    e_p_samples = list(np.random.uniform(e_p[0], e_p[1], n))
-    bw_samples = list(np.random.uniform(bw[0], bw[1], n))
-    h_samples = list(np.random.uniform(h[0], h[1], n))
+    p_samples = np.random.uniform(p[0], p[1], n)
+    e_p_samples = np.random.uniform(e_p[0], e_p[1], n)
+    bw_samples = np.random.uniform(bw[0], bw[1], n)
+    h_samples = np.random.uniform(h[0], h[1], n)
 
-    df = {'p (kN)': p_samples, 'e_p (m)': e_p_samples, 'bw (m)': bw_samples, 'h (m)': h_samples}
-    df = pd.DataFrame(df)
+    df = pd.DataFrame({'p (kN)': p_samples, 'e_p (m)': e_p_samples, 'bw (m)': bw_samples, 'h (m)': h_samples})
     
-    a_c_list = []
-    r_list = []
-    rig_list = []
-    g_lists = []
+    a_c_list, r_list, rig_list, g_lists = [], [], [], []
+
+    logger.info(f"Processing samples...")
+
+    # Definir o intervalo para atualização
+    update_interval = 100  # Atualiza o progress bar a cada 100 iterações
 
     for i, row in df.iterrows():
         fixed_variables = {
-                            'g (kN/m)': g_ext,
-                            'q (kN/m)': q,
-                            'l (m)': l,
-                            'tipo de seção': 'retangular',
-                            'fck,ato (kPa)': f_cj * 1E3,
-                            'fck (kPa)': f_c * 1E3,
-                            'fator de fluência para o ato': phi_a,
-                            'fator de fluência para o serviço': phi_b,
-                            'flecha limite de fabrica (m)': l/1000,
-                            'flecha limite de serviço (m)': l/250,
-                            'coeficiente parcial para carga q': psi,
-                            'perda inicial de protensão (%)': perda_inicial,
-                            'perda total de protensão (%)': perda_final
-                            }
+            'g (kN/m)': g_ext, 'q (kN/m)': q, 'l (m)': l, 'tipo de seção': 'retangular',
+            'fck,ato (kPa)': f_cj * 1E3, 'fck (kPa)': f_c * 1E3, 'fator de fluência para o ato': phi_a,
+            'fator de fluência para o serviço': phi_b, 'flecha limite de fabrica (m)': l/1000,
+            'flecha limite de serviço (m)': l/250, 'coeficiente parcial para carga q': psi,
+            'perda inicial de protensão (%)': perda_inicial, 'perda total de protensão (%)': perda_final
+        }
 
         of, g = new_obj_ic_jack_priscilla([row['p (kN)'], row['e_p (m)'], row['bw (m)'], row['h (m)']], fixed_variables)
         a_c_list.append(of[0])
         r_list.append(of[1])
         g_lists.append(g)
+
+        # Atualiza logs em tempo real a cada N iterações
+        if i % update_interval == 0:
+            log_area.text_area("Logs", log_buffer.getvalue(), height=250, key=f"log_area_sample_{i}")
+            progress_bar.progress((i + 1) / n_length)
+
+    # Atualiza uma última vez após o processamento
+    log_area.text_area("Logs", log_buffer.getvalue(), height=250, key=f"log_area_sample_final")
 
     df['a_c (m²)'] = a_c_list
     df['r'] = r_list
@@ -59,80 +104,71 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     for idx, g_list in enumerate(zip(*g_lists)):
         df[f'g_{idx}'] = g_list
 
-    df = pd.DataFrame(df)
-    df = df[(df[[col for col in df.columns if col.startswith('g_')]] <= 0).all(axis=1)]
-    df.reset_index(drop=True, inplace=True)
-    
-    ac_min = float(df['a_c (m²)'].min())
-    ac_max = float(df['a_c (m²)'].max())
+    df = df[(df[[col for col in df.columns if col.startswith('g_')]] <= 0).all(axis=1)].reset_index(drop=True)
 
-    import pandas as pd
-    lambda_list = list(np.linspace(ac_min, ac_max, n_lambda))
+    ac_min, ac_max = df['a_c (m²)'].min(), df['a_c (m²)'].max()
+
+    lambda_list = np.linspace(ac_min, ac_max, n_lambda)
     results = []
-    iter_var = 0
 
-    for lambda_value in lambda_list:
-        print(f'Iteration: {iter_var}, Lambda: {lambda_value}')
+    for iter_var, lambda_value in enumerate(lambda_list):
+        logger.info(f"Iteration {iter_var + 1}/{n_lambda} - lambda = {lambda_value:.4f}")
 
         variaveis_proj = {
-                                'g (kN/m)': g_ext,
-                                'q (kN/m)': q,
-                                'l (m)': l,
-                                'tipo de seção': 'retangular',
-                                'fck,ato (kPa)': f_cj * 1E3,
-                                'fck (kPa)': f_c * 1E3,
-                                'lambda': lambda_value,
-                                'rp': 1E6,
-                                'fator de fluência para o ato': phi_a,
-                                'fator de fluência para o serviço': phi_b,
-                                'flecha limite de fabrica (m)': l/1000,
-                                'flecha limite de serviço (m)': l/250,
-                                'coeficiente parcial para carga q': psi,
-                                'perda inicial de protensão (%)': perda_inicial,
-                                'perda total de protensão (%)': perda_final
-                            }
-        algorithm_setup = {   
-                                'number of iterations': int(iterations),
-                                'number of population': int(pop_size),
-                                'number of dimensions': 4,
-                                'x pop lower limit': [pres_min, exc_min, width_min, height_min],
-                                'x pop upper limit': [pres_max, exc_max, width_max, height_max],
-                                'none variable': variaveis_proj,
-                                'objective function': obj_ic_jack_priscilla,
-                                'algorithm parameters': {
-                                                        'selection': {'type': 'roulette'},
-                                                        'crossover': {'crossover rate (%)': 90, 'type':'linear'},
-                                                        'mutation': {'mutation rate (%)': 20, 'type': 'hill climbing', 'cov (%)': 10, 'pdf': 'gaussian'},
-                                                        }
-                        }
+            'g (kN/m)': g_ext, 'q (kN/m)': q, 'l (m)': l, 'tipo de seção': 'retangular',
+            'fck,ato (kPa)': f_cj * 1E3, 'fck (kPa)': f_c * 1E3, 'lambda': lambda_value, 'rp': 1E6,
+            'fator de fluência para o ato': phi_a, 'fator de fluência para o serviço': phi_b,
+            'flecha limite de fabrica (m)': l/1000, 'flecha limite de serviço (m)': l/250,
+            'coeficiente parcial para carga q': psi, 'perda inicial de protensão (%)': perda_inicial,
+            'perda total de protensão (%)': perda_final
+        }
 
-        general_setup = {   
-                            'number of repetitions': 15,
-                            'type code': 'real code',
-                            'initial pop. seed': [None] * 15,
-                            'algorithm': 'genetic_algorithm_01',
-                        }
-        
+        algorithm_setup = {
+            'number of iterations': int(iterations),
+            'number of population': int(pop_size),
+            'number of dimensions': 4,
+            'x pop lower limit': [pres_min, exc_min, width_min, height_min],
+            'x pop upper limit': [pres_max, exc_max, width_max, height_max],
+            'none variable': variaveis_proj,
+            'objective function': obj_ic_jack_priscilla,
+            'algorithm parameters': {
+                'selection': {'type': 'roulette'},
+                'crossover': {'crossover rate (%)': 90, 'type': 'linear'},
+                'mutation': {'mutation rate (%)': 20, 'type': 'hill climbing', 'cov (%)': 10, 'pdf': 'gaussian'},
+            }
+        }
+
+        general_setup = {
+            'number of repetitions': 15, 'type code': 'real code',
+            'initial pop. seed': [None] * 15, 'algorithm': 'genetic_algorithm_01',
+        }
+
         df_all_reps, df_resume_all_reps, reports, status = metaheuristic_optimizer(algorithm_setup, general_setup)
         best_result_row = df_resume_all_reps[status].iloc[-1]
+
         of, g = new_obj_ic_jack_priscilla([best_result_row['X_0_BEST'], 
-                                        best_result_row['X_1_BEST'], 
-                                        best_result_row['X_2_BEST'], 
-                                        best_result_row['X_3_BEST']], 
-                                        variaveis_proj)
+                                           best_result_row['X_1_BEST'], 
+                                           best_result_row['X_2_BEST'], 
+                                           best_result_row['X_3_BEST']], variaveis_proj)
+
         result = {
-                    'lambda': lambda_value,
-                    'X_0_BEST': best_result_row['X_0_BEST'],
-                    'X_1_BEST': best_result_row['X_1_BEST'],
-                    'X_2_BEST': best_result_row['X_2_BEST'],
-                    'X_3_BEST': best_result_row['X_3_BEST'],
-                    'OF_0': of[0],
-                    'OF_1': of[1]
-                }
+            'lambda': lambda_value,
+            'X_0_BEST': best_result_row['X_0_BEST'], 'X_1_BEST': best_result_row['X_1_BEST'],
+            'X_2_BEST': best_result_row['X_2_BEST'], 'X_3_BEST': best_result_row['X_3_BEST'],
+            'OF_0': of[0], 'OF_1': of[1]
+        }
+
         for i, g_value in enumerate(g):
             result[f'G_{i}'] = g_value
-        iter_var += 1
+
         results.append(result)
+
+        # Atualiza logs
+        log_area.text_area("Logs", log_buffer.getvalue(), height=250, key=f"log_area_{iter_var}")
+        progress_bar.progress((iter_var + 1) / n_lambda)
+
+    logger.info("Finished simulation")
+
     df_results = pd.DataFrame(results)
 
     # Gerando a figura 
@@ -142,11 +178,10 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
 
     ax.set_xlabel('Área da seção (m²)', fontsize=14)
     ax.set_ylabel('Carga $g$ estabilizada (%)', fontsize=14)
-    ax.grid(False)
     ax.legend()
 
     # Exibindo os resultados
-    st.subheader("Results")
+    st.subheader("Resultados")
     st.write(df_results)
     st.pyplot(fig)
 
@@ -156,12 +191,8 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
 
     towrite_pareto.seek(0)
 
-    st.download_button(
-        label="Download solutions",
-        data=towrite_pareto,
-        file_name="ag_solutions.xlsx",
-        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    )
+    st.download_button("Baixar soluções", towrite_pareto, "ag_solutions.xlsx", 
+                       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 
 def monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_max, width_min, width_max, height_min, height_max):
