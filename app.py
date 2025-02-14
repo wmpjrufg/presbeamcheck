@@ -9,48 +9,48 @@ import matplotlib.pyplot as plt
 import json
 import logging
 
-# Configuração do logger
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
-logger = logging.getLogger()
+# # Configuração do logger
+# logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
+# logger = logging.getLogger()
 
-# Criar um widget para exibir logs no Streamlit
-class StreamlitLogger:
-    def __init__(self):
-        self.logs = ""
+# # Criar um widget para exibir logs no Streamlit
+# class StreamlitLogger:
+#     def __init__(self):
+#         self.logs = ""
 
-    def write(self, message):
-        if message.strip():
-            self.logs += message + "\n"
-            st.session_state.logs = self.logs
+#     def write(self, message):
+#         if message.strip():
+#             self.logs += message + "\n"
+#             st.session_state.logs = self.logs
 
-    def flush(self):
-        pass
+#     def flush(self):
+#         pass
 
-if "logs" not in st.session_state:
-    st.session_state.logs = ""
+# if "logs" not in st.session_state:
+#     st.session_state.logs = ""
 
-log_area = StreamlitLogger()
+# log_area = StreamlitLogger()
 
 
 def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, perda_final, 
                    iterations, pop_size, pres_min, pres_max, exc_min, exc_max, 
                    width_min, width_max, height_min, height_max):
     
-    # Configuração do logger para capturar logs em tempo real
-    log_buffer = io.StringIO()
-    handler = logging.StreamHandler(log_buffer)
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    handler.setFormatter(formatter)
+    # # Configuração do logger para capturar logs em tempo real
+    # log_buffer = io.StringIO()
+    # handler = logging.StreamHandler(log_buffer)
+    # formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    # handler.setFormatter(formatter)
     
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
-    logger.addHandler(handler)
+    # logger = logging.getLogger()
+    # logger.setLevel(logging.INFO)
+    # logger.addHandler(handler)
 
-    # Placeholder para logs e barra de progresso
-    log_area = st.empty()
-    progress_bar = st.progress(0)
+    # # Placeholder para logs e barra de progresso
+    # log_area = st.empty()
+    # progress_bar = st.progress(0)
 
-    logger.info("Iniciando simulação de Monte Carlo...")
+    # logger.info("Iniciando simulação de Monte Carlo...")
     
     # Configuração inicial
     n_lambda = 20      
@@ -71,10 +71,10 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     
     a_c_list, r_list, rig_list, g_lists = [], [], [], []
 
-    logger.info(f"Processing samples...")
+    # logger.info(f"Processing samples...")
 
-    # Definir o intervalo para atualização
-    update_interval = 100  # Atualiza o progress bar a cada 100 iterações
+    # # Definir o intervalo para atualização
+    # update_interval = 100  # Atualiza o progress bar a cada 100 iterações
 
     for i, row in df.iterrows():
         fixed_variables = {
@@ -90,13 +90,13 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
         r_list.append(of[1])
         g_lists.append(g)
 
-        # Atualiza logs em tempo real a cada N iterações
-        if i % update_interval == 0:
-            log_area.text_area("Logs", log_buffer.getvalue(), height=250, key=f"log_area_sample_{i}")
-            progress_bar.progress((i + 1) / n_length)
+        # # Atualiza logs em tempo real a cada N iterações
+        # if i % update_interval == 0:
+        #     log_area.text_area("Logs", log_buffer.getvalue(), height=250, key=f"log_area_sample_{i}")
+        #     progress_bar.progress((i + 1) / n_length)
 
-    # Atualiza uma última vez após o processamento
-    log_area.text_area("Logs", log_buffer.getvalue(), height=250, key=f"log_area_sample_final")
+    # # Atualiza uma última vez após o processamento
+    # log_area.text_area("Logs", log_buffer.getvalue(), height=250, key=f"log_area_sample_final")
 
     df['a_c (m²)'] = a_c_list
     df['r'] = r_list
@@ -112,7 +112,7 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     results = []
 
     for iter_var, lambda_value in enumerate(lambda_list):
-        logger.info(f"Iteration {iter_var + 1}/{n_lambda}.")
+        # logger.info(f"Iteration {iter_var + 1}/{n_lambda}.")
 
         variaveis_proj = {
             'g (kN/m)': g_ext, 'q (kN/m)': q, 'l (m)': l, 'tipo de seção': 'retangular',
@@ -163,11 +163,11 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
 
         results.append(result)
 
-        # Atualiza logs
-        log_area.text_area("Logs", log_buffer.getvalue(), height=250, key=f"log_area_{iter_var}")
-        progress_bar.progress((iter_var + 1) / n_lambda)
+    #     # Atualiza logs
+    #     log_area.text_area("Logs", log_buffer.getvalue(), height=250, key=f"log_area_{iter_var}")
+    #     progress_bar.progress((iter_var + 1) / n_lambda)
 
-    logger.info("Finished simulation")
+    # logger.info("Finished simulation")
 
     df_results = pd.DataFrame(results)
 
@@ -314,9 +314,9 @@ col1, col2 = st.columns(2)
 with col1:
     if st.button(translations["pt"]["button_pt"]):  # Botão para português
         st.session_state.lang = "pt"
-with col2:
-    if st.button(translations["en"]["button_en"]):  # Botão para inglês
-        st.session_state.lang = "en"
+# with col2:
+#     if st.button(translations["en"]["button_en"]):  # Botão para inglês
+#         st.session_state.lang = "en"
 
 # Obter textos no idioma selecionado
 texts = translations[st.session_state.lang]
