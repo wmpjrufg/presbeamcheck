@@ -1,11 +1,11 @@
 from protendido import obj_ic_jack_priscilla, new_obj_ic_jack_priscilla
 from metapy_toolbox import metaheuristic_optimizer
-from easyplot_toolbox import line_chart, histogram_chart, scatter_chart, bar_chart
 from io import BytesIO
 import pandas as pd
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
+import json
 
 def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, perda_final, iterations, pop_size, pres_min, pres_max, exc_min, exc_max, width_min, width_max, height_min, height_max):
     import pandas as pd
@@ -270,150 +270,95 @@ def monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_m
         st.pyplot(fix)
 
 
-def change_language(lang):
-    if lang == "pt":
-        return {
-            "title": "Prestressed Beam Check Routine",
-            "description": """This app checks a simple supported beam subject to one dead and live load. 
-                              The user needs to fill in a project variables interval (prestressed load, eccentricity, width, and height). 
-                              The algorithm checks linear stress when a prestressed load is introduced in the beam, and it also checks 
-                              linear stress in service and the geometric constraints of ABNT NBR 6118.""",
-            "model_label": "Select Model",
-            "dead_load": "Dead load (kN/m)",
-            "live_load": "Live load (kN/m)",
-            "beam_length": "Beam length (m)",
-            "fc": "fc (MPa)",
-            "fcj": "fcj (MPa)",
-            "algorithm_setup": "Algorithm Setup",
-            "iterations": "Number of iterations",
-            "prestressed_min": "Prestressed minimum",
-            "eccentricity_min": "Eccentricity minimum",
-            "width_min": "Width minimum",
-            "height_min": "Height minimum",
-            "population_size": "Population size",
-            "prestressed_max": "Prestressed maximum",
-            "eccentricity_max": "Eccentricity maximum",
-            "width_max": "Width maximum",
-            "height_max": "Height maximum",
-            "samples": "Number of samples"
-        }
-    else:  # pt
-        return {
-            "title": "Rotina de Verificação de Viga Protendida",
-            "description": """Este aplicativo verifica uma viga biapoiada sujeita a uma carga permanente e acidental. 
-                              O usuário precisa preencher o intervalo das variáveis do projeto (carga protendida, excentricidade, largura e altura). 
-                              O algoritmo verifica a tensão linear quando a carga protendida é introduzida na viga, e também verifica 
-                              a tensão linear em serviço e as restrições geométricas da ABNT NBR 6118.""",
-            "model_label": "Selecione o Modelo",
-            "g_ext": "Carga externa permanente (kN/m)",
-            "q": "Carga variável de utilização (kN/m)",
-            "l": "Vão da viga (m)",
-            "f_c": "Resistência característica à compressão no serviço (MPa)",
-            "f_cj": "Resistência característica à compressão no ato (MPa)",
-            "phi_a": "Coeficiente de fluência para carregamento no ato",
-            "phi_b": "Coeficiente de fluência para carregamento no serviço",
-            "psi": "Coeficiente ψ redutor para ação variável",
-            "perda_inicial": "Estimativa pecentual da perda inicial de protensão (%)",
-            "perda_final": "Estimativa pecentual da perda total de protensão (%)",
-            "parameters": "Parâmetros da viga protendida",
-            "algorithm_setup": "Configuração do Algoritmo",
-            "iterations": "Número de iterações",
-            "prestressed_min": "Carga de protensão (kN) - valor inferior",
-            "prestressed_max": "Carga de protensão (kN) - valor superior",
-            "eccentricity_min": "Excentricidade de protensão (m) - valor inferior",
-            "eccentricity_max": "Excentricidade de protensão (m) - valor superior",
-            "width_min": "Largura da seção (m) - valor inferior",
-            "width_max": "Largura da seção (m) - valor superior",
-            "height_min": "Altura da seção (m) - valor inferior",
-            "height_max": "Altura da seção (m) - valor superior",
-            "pop_size": "Número de agentes para busca",
-        }
+# Carregar traduções do JSON
+with open("translations.json", "r", encoding="utf-8") as file:
+    translations = json.load(file)
 
+# Inicializar idioma na sessão se não estiver definido
+if "lang" not in st.session_state:
+    st.session_state.lang = "pt"  # Português como padrão
 
-if __name__ == "__main__":
+# Criar um seletor de idioma
+col1, col2 = st.columns(2)
+with col1:
+    if st.button(translations["pt"]["button_pt"]):  # Botão para português
+        st.session_state.lang = "pt"
+with col2:
+    if st.button(translations["en"]["button_en"]):  # Botão para inglês
+        st.session_state.lang = "en"
+
+# Obter textos no idioma selecionado
+texts = translations[st.session_state.lang]
+
+# Exibir título e descrição
+st.title(texts["title"])
+st.write(texts["description"])
+
+# Seleção de modelo
+model = st.radio(texts["model_label"], ['Monte Carlo', "Ag"])
+
+if model == 'Monte Carlo':
+    st.subheader(texts["parameters"])
+    g = st.number_input(texts["g_ext"], value=None)
+    q = st.number_input(texts["q"], value=None)
+    l = st.number_input(texts["l"], value=None)
+    f_c = st.number_input(texts["f_c"], value=None)
+    f_cj = st.number_input(texts["f_cj"], value=None)
+
+    st.subheader(texts["algorithm_setup"])
     col1, col2 = st.columns(2)
+
     with col1:
-        if st.button("&#127463;&#127479; Português"):  # 🇧🇷
-            lang = "pt"
-        else:
-            lang = "en"
+        pres_min = st.number_input(texts["prestressed_min"], value=None)
+        exc_min = st.number_input(texts["eccentricity_min"], value=None)
+        width_min = st.number_input(texts["width_min"], value=None)
+        height_min = st.number_input(texts["height_min"], value=None)
+        pop_size = st.number_input(texts["pop_size"], value=None)
+
     with col2:
-        if st.button("&#127468;&#127463; English"):  # 🇬🇧
-            lang = "en"
+        pres_max = st.number_input(texts["prestressed_max"], value=None)
+        exc_max = st.number_input(texts["eccentricity_max"], value=None)
+        width_max = st.number_input(texts["width_max"], value=None)
+        height_max = st.number_input(texts["height_max"], value=None)
 
-    texts = change_language(lang)
-    st.title(texts["title"])
-    st.write(texts["description"])
+    # Chamar função Monte Carlo (supondo que ela existe)
+    # monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_max, width_min, width_max, height_min, height_max)
 
-    # Seleção de modelo
-    model = st.radio(texts["model_label"], ['Monte Carlo', "Ag"])
+elif model == "Ag":
+    st.subheader(texts["parameters"])
+    col1, col2 = st.columns(2)
 
-    if model == 'Monte Carlo':
-        st.subheader(texts["parameters"])
-        g = st.number_input(texts["g_ext"], value=None)
-        q = st.number_input(texts["q"], value=None)
+    with col1:
+        g_ext = st.number_input(texts["g_ext"], value=None)
         l = st.number_input(texts["l"], value=None)
-        f_c = st.number_input(texts["f_c"], value=None)
         f_cj = st.number_input(texts["f_cj"], value=None)
+        phi_b = st.number_input(texts["phi_b"], value=None)
+        perda_inicial = st.number_input(texts["perda_inicial"], value=None)
 
-        st.subheader(texts["algorithm_setup"])
+    with col2:
+        q = st.number_input(texts["q"], value=None)
+        f_c = st.number_input(texts["f_c"], value=None)
+        phi_a = st.number_input(texts["phi_a"], value=None)
+        psi = st.number_input(texts["psi"], value=None)
+        perda_final = st.number_input(texts["perda_final"], value=None)
 
-        col1, col2 = st.columns(2)
-        with col1:
-            pres_min = st.number_input(texts["prestressed_min"], value=None)
-            exc_min = st.number_input(texts["eccentricity_min"], value=None)
-            width_min = st.number_input(texts["width_min"], value=None)
-            height_min = st.number_input(texts["height_min"], value=None)
-            pop_size = st.number_input(texts["pop_size"], value=None)
+    st.subheader(texts["algorithm_setup"])
+    col3, col4 = st.columns(2)
 
-        with col2:
-            pres_max = st.number_input(texts["prestressed_max"], value=None)
-            exc_max = st.number_input(texts["eccentricity_max"], value=None)
-            width_max = st.number_input(texts["width_max"], value=None)
-            height_max = st.number_input(texts["height_max"], value=None)
+    with col3:
+        iterations = st.number_input(texts["iterations"], value=None)
+        pres_min = st.number_input(texts["prestressed_min"], value=None)
+        exc_min = st.number_input(texts["eccentricity_min"], value=None)
+        width_min = st.number_input(texts["width_min"], value=None)
+        height_min = st.number_input(texts["height_min"], value=None)
 
-        # Função de Monte Carlo
-        monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_max, width_min, width_max, height_min, height_max)
-    
-    elif model == "Ag":
-        st.subheader(texts["parameters"])
-        col1, col2 = st.columns(2)
+    with col4:
+        pop_size = st.number_input(texts["pop_size"], value=None)
+        pres_max = st.number_input(texts["prestressed_max"], value=None)
+        exc_max = st.number_input(texts["eccentricity_max"], value=None)
+        width_max = st.number_input(texts["width_max"], value=None)
+        height_max = st.number_input(texts["height_max"], value=None)
 
-        with col1:
-            g_ext = st.number_input(texts["g_ext"], value=None)
-            l = st.number_input(texts["l"], value=None)
-            f_cj = st.number_input(texts["f_cj"], value=None)
-            phi_b = st.number_input(texts["phi_b"], value=None)
-            perda_inicial = st.number_input(texts["perda_inicial"], value=None)
-            
-        
-        with col2:
-            q = st.number_input(texts["q"], value=None)
-            f_c = st.number_input(texts["f_c"], value=None)
-            phi_a = st.number_input(texts["phi_a"], value=None)
-            psi = st.number_input(texts["psi"], value=None)
-            perda_final = st.number_input(texts["perda_final"], value=None)
-        
-        st.subheader(texts["algorithm_setup"])
-        col3, col4 = st.columns(2)
-
-        with col3:
-            iterations = st.number_input(texts["iterations"], value=None)
-            pres_min = st.number_input(texts["prestressed_min"], value=None)
-            exc_min = st.number_input(texts["eccentricity_min"], value=None)
-            width_min = st.number_input(texts["width_min"], value=None)
-            height_min = st.number_input(texts["height_min"], value=None)
-            
-
-        with col4:
-            pop_size = st.number_input(texts["pop_size"], value=None)
-            pres_max = st.number_input(texts["prestressed_max"], value=None)
-            exc_max = st.number_input(texts["eccentricity_max"], value=None)
-            width_max = st.number_input(texts["width_max"], value=None)
-            height_max = st.number_input(texts["height_max"], value=None)
-
-        if st.button("Run Simulation"):
-            print(f"g_ext: {g_ext}, q: {q}, l: {l}, f_c: {f_c}, f_cj: {f_cj}, phi_a: {phi_a}, phi_b: {phi_b}, psi: {psi}, perda_inicial: {perda_inicial}, perda_final: {perda_final}, iterations: {iterations}, pop_size: {pop_size}, pres_min: {pres_min}, pres_max: {pres_max}, exc_min: {exc_min}, exc_max: {exc_max}, width_min: {width_min}, width_max: {width_max}, height_min: {height_min}, height_max: {height_max}")
-            ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, perda_final, iterations, pop_size, pres_min, pres_max, exc_min, exc_max, width_min, width_max, height_min, height_max)
-
-
+    if st.button(texts["run_simulation"]):
+        print(f"Executando simulação com os parâmetros selecionados...")
+        ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, perda_final, iterations, pop_size, pres_min, pres_max, exc_min, exc_max, width_min, width_max, height_min, height_max)
