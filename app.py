@@ -326,7 +326,7 @@ st.title(texts["title"])
 st.write(texts["description"])
 
 # Seleção de modelo
-model = st.radio(texts["model_label"], ['Monte Carlo', "Ag"])
+model = st.radio(texts["model_label"], ["Ag"])# , ['Monte Carlo', "Ag"])
 
 if model == 'Monte Carlo':
     st.subheader(texts["parameters"])
