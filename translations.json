@@ -30,9 +30,9 @@
         "run_simulation": "Run Simulation"
     },
     "pt": {
-        "title": "Rotina de Verificação de Viga Protendida",
-        "description": "Este aplicativo verifica uma viga biapoiada sujeita a uma carga permanente e acidental...",
-        "model_label": "Selecione o Modelo",
+        "title": "Otimização de Viga Protendida",
+        "description": "Este aplicativo verifica uma viga biapoiada protendida sujeita a uma carga permanente e variável.",
+        "model_label": "Selecione o algoritmo",
         "g_ext": "Carga externa permanente (kN/m)",
         "q": "Carga variável de utilização (kN/m)",
         "l": "Vão da viga (m)",
@@ -43,8 +43,8 @@
         "psi": "Coeficiente ψ redutor para ação variável",
         "perda_inicial": "Estimativa percentual da perda inicial de protensão (%)",
         "perda_final": "Estimativa percentual da perda total de protensão (%)",
-        "parameters": "Parâmetros da Viga Protendida",
-        "algorithm_setup": "Configuração do Algoritmo",
+        "parameters": "Parâmetros de projeto da viga protendida",
+        "algorithm_setup": "Configuração do algoritmo",
         "iterations": "Número de iterações",
         "prestressed_min": "Carga de protensão mínima (kN)",
         "prestressed_max": "Carga de protensão máxima (kN)",
@@ -55,8 +55,8 @@
         "height_min": "Altura mínima (m)",
         "height_max": "Altura máxima (m)",
         "pop_size": "Número de agentes para busca",
-        "button_pt": "🇧🇷 Português",
-        "button_en": "🇬🇧 English",
+        "button_pt": "Português (BR)",
+        "button_en": "English",
         "run_simulation": "Executar Simulação"
     }
 }

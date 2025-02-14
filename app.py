@@ -51,7 +51,7 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     
     # Configuração de parâmetros para processamento monte carlo
     n_lambda = 10      
-    n_length = 5000    
+    n_length = 500    
     p = [pres_min, pres_max]
     e_p = [exc_min, exc_max]
     bw = [width_min, width_max]
@@ -129,8 +129,8 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
             'objective function': obj_ic_jack_priscilla,
             'algorithm parameters': {
                 'selection': {'type': 'roulette'},
-                'crossover': {'crossover rate (%)': 90, 'type': 'linear'},
-                'mutation': {'mutation rate (%)': 20, 'type': 'hill climbing', 'cov (%)': 10, 'pdf': 'gaussian'},
+                'crossover': {'crossover rate (%)': 100, 'type': 'linear'},
+                'mutation': {'mutation rate (%)': 20, 'type': 'hill climbing', 'cov (%)': 20, 'pdf': 'gaussian'},
             }
         }
 
@@ -187,7 +187,7 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     with pd.ExcelWriter(towrite_pareto, engine="xlsxwriter") as writer:
         df_results.to_excel(writer, index=False, sheet_name="Pareto Front")
     towrite_pareto.seek(0)
-    st.download_button("Download Fronteira Eficiente", towrite_pareto, "fronteira_eficiente.xlsx", 
+    st.download_button("Baixar Fronteira Eficiente", towrite_pareto, "fronteira_eficiente.xlsx", 
                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 
@@ -322,7 +322,7 @@ st.title(texts["title"])
 st.write(texts["description"])
 
 # Seleção de modelo
-model = st.radio(texts["model_label"], ["Ag"])# , ['Monte Carlo', "Ag"])
+model = st.radio(texts["model_label"], ["AG"])# , ['Monte Carlo', "Ag"])
 
 if model == 'Monte Carlo':
     st.subheader(texts["parameters"])
@@ -351,7 +351,7 @@ if model == 'Monte Carlo':
     # Chamar função Monte Carlo (supondo que ela existe)
     # monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_max, width_min, width_max, height_min, height_max)
 
-elif model == "Ag":
+elif model == "AG":
     st.subheader(texts["parameters"])
     col1, col2 = st.columns(2)
 
