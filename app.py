@@ -57,6 +57,7 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     bw = [width_min, width_max]
     h = [height_min, height_max]
     n = n_length
+    n_reps = 5
     np.random.seed(42)
     p_samples = np.random.uniform(p[0], p[1], n)
     e_p_samples = np.random.uniform(e_p[0], e_p[1], n)
@@ -134,16 +135,26 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
             }
         }
 
-        # Pop. inicial
-        init_pop = initial_population_01(algorithm_setup['number of population'],
-                                algorithm_setup['number of dimensions'],
-                                algorithm_setup['x pop lower limit'],
-                                algorithm_setup['x pop upper limit'])
+        of_best = []
+        df_resume_best = []
+        for i in range(n_reps):
+            # Pop. inicial
+            init_pop = initial_population_01(algorithm_setup['number of population'],
+                                    algorithm_setup['number of dimensions'],
+                                    algorithm_setup['x pop lower limit'],
+                                    algorithm_setup['x pop upper limit'])
 
-        # Execução do AG
-        settings = [algorithm_setup, init_pop, None]
-        _, df_resume, _, _ = genetic_algorithm_01(settings)
+            # Execução do AG
+            settings = [algorithm_setup, init_pop, None]
+            _, df_resume, _, _ = genetic_algorithm_01(settings)
+            df_resume_best.append(df_resume)
+            of_best.append(df_resume.iloc[-1]['OF BEST'])
+
+        print(of_best)
         best_result_row = df_resume.iloc[-1]
+        status = of_best.index(min(of_best))
+        print(f'status: {status}')
+        print(df_resume_best[status].iloc[-1])
 
         # Avaliando as restriçõs do resultado best encontrado
         of, g = new_obj_ic_jack_priscilla([best_result_row['X_0_BEST'], 
