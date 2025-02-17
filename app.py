@@ -336,9 +336,10 @@ texts = translations[st.session_state.lang]
 st.title(texts["title"])
 st.write(texts["description"])
 
-# Seleção de modelo
-model = st.radio(texts["model_label"], ["AG"])# , ['Monte Carlo', "Ag"])
+# # Seleção de modelo
+# model = st.radio(texts["model_label"], ["AG"])# , ['Monte Carlo', "Ag"])
 
+model = 'AG'
 if model == 'Monte Carlo':
     st.subheader(texts["parameters"])
     g = st.number_input(texts["g_ext"], value=None)
