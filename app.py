@@ -151,13 +151,17 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
                                            best_result_row['X_2_BEST'], 
                                            best_result_row['X_3_BEST']], variaveis_proj)
         result = {
-            'lambda': lambda_value,
-            'X_0_BEST': best_result_row['X_0_BEST'], 'X_1_BEST': best_result_row['X_1_BEST'],
-            'X_2_BEST': best_result_row['X_2_BEST'], 'X_3_BEST': best_result_row['X_3_BEST'],
-            'a_c (m²)': of[0], 'r (%)': of[1]
+            'p (kN)': f"{best_result_row['X_0_BEST']:.3e}",  
+            'ep (m)': f"{best_result_row['X_1_BEST']:.3e}",  
+            'bw (m)': f"{best_result_row['X_2_BEST']:.3e}",  
+            'h (m)': f"{best_result_row['X_3_BEST']:.3e}",  
+            'a_c (m²)': f"{of[0]:.3e}",  
+            'r (%)': f"{of[1]:.3e}"  
         }
+
         for i, g_value in enumerate(g):
-            result[f'G_{i}'] = g_value
+            result[f'G_{i}'] = f"{g_value:.3e}" 
+
         results.append(result)
 
     #     # Atualiza logs
