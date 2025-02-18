@@ -181,7 +181,8 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
         log_area.text_area("Logs", log_buffer.getvalue(), height=250, key=f"log_area_{iter_var}")
         progress_bar.progress((iter_var + 1) / n_lambda)
 
-    logger.info("Finished simulation")
+    logger.info("Fim da simulação de Monte Carlo.")
+    log_area.text_area("Logs", log_buffer.getvalue(), height=250, key="log_area_final")
 
 
     df_results = pd.DataFrame(results)
