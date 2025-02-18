@@ -1,5 +1,5 @@
 from protendido import obj_ic_jack_priscilla, new_obj_ic_jack_priscilla
-from metapy_toolbox import initial_population_01, genetic_algorithm_01
+from metapy_toolbox import initial_population_01, genetic_algorithm_01, gender_firefly_01
 import io
 from io import BytesIO
 import pandas as pd
@@ -51,13 +51,12 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     
     # Configuração de parâmetros para processamento monte carlo
     n_lambda = 10      
-    n_length = 500    
+    n_length = 5000    
     p = [pres_min, pres_max]
     e_p = [exc_min, exc_max]
     bw = [width_min, width_max]
     h = [height_min, height_max]
     n = n_length
-    n_reps = 5
     np.random.seed(42)
     p_samples = np.random.uniform(p[0], p[1], n)
     e_p_samples = np.random.uniform(e_p[0], e_p[1], n)
@@ -108,7 +107,7 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     results = []
 
     # Montando a fronteira eficiente
-    for iter_var, lambda_value in enumerate(lambda_list):
+    for _, lambda_value in enumerate(lambda_list):
         # logger.info(f"Iteration {iter_var + 1}/{n_lambda}.")
 
         # Atribuição dos valores de entrada do AG
@@ -121,58 +120,69 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
             'perda total de protensão (%)': perda_final
         }
         algorithm_setup = {
-            'number of iterations': int(iterations),
-            'number of population': int(pop_size),
-            'number of dimensions': 4,
-            'x pop lower limit': [pres_min, exc_min, width_min, height_min],
-            'x pop upper limit': [pres_max, exc_max, width_max, height_max],
-            'none variable': variaveis_proj,
-            'objective function': obj_ic_jack_priscilla,
-            'algorithm parameters': {
-                'selection': {'type': 'roulette'},
-                'crossover': {'crossover rate (%)': 100, 'type': 'linear'},
-                'mutation': {'mutation rate (%)': 20, 'type': 'hill climbing', 'cov (%)': 20, 'pdf': 'gaussian'},
-            }
-        }
+                            'number of iterations': int(iterations),
+                            'number of population': int(pop_size),
+                            'number of dimensions': 4,
+                            'x pop lower limit': [pres_min, exc_min, width_min, height_min],
+                            'x pop upper limit': [pres_max, exc_max, width_max, height_max],
+                            'none variable': variaveis_proj,
+                            'objective function': obj_ic_jack_priscilla,
+                            'algorithm parameters': {
+                                'selection': {'type': 'roulette'},
+                                'crossover': {'crossover rate (%)': 100, 'type': 'linear'},
+                                'mutation': {'mutation rate (%)': 20, 'type': 'hill climbing', 'cov (%)': 20, 'pdf': 'gaussian'},
+                            }
+                        }
+
+        # algorithm_setup = {   
+        #                     'number of iterations': int(iterations),
+        #                     'number of population': int(pop_size),
+        #                     'number of dimensions': 4,
+        #                     'x pop lower limit': [pres_min, exc_min, width_min, height_min],
+        #                     'x pop upper limit': [pres_max, exc_max, width_max, height_max],
+        #                     'none variable': variaveis_proj,
+        #                     'objective function': obj_ic_jack_priscilla,
+        #                     'algorithm parameters': {
+        #                                                 'attractiveness': {'gamma': 'auto', 'beta_0': 0.98},
+        #                                                 'female population': {'number of females': 10},
+        #                                                 'mutation': {
+        #                                                                 'mutation rate (%)': 100,
+        #                                                                 'type': 'chaotic map 01',
+        #                                                                 'alpha': 4,
+        #                                                                 'number of tries': 5,
+        #                                                             }
+        #                                             }
+        #                     }
 
         of_best = []
         df_resume_best = []
-        for i in range(n_reps):
-            # Pop. inicial
+        for _ in range(10):
             init_pop = initial_population_01(algorithm_setup['number of population'],
                                     algorithm_setup['number of dimensions'],
                                     algorithm_setup['x pop lower limit'],
                                     algorithm_setup['x pop upper limit'])
-
-            # Execução do AG
             settings = [algorithm_setup, init_pop, None]
             _, df_resume, _, _ = genetic_algorithm_01(settings)
+            #_, df_resume, _, _ = gender_firefly_01(settings)
             df_resume_best.append(df_resume)
             of_best.append(df_resume.iloc[-1]['OF BEST'])
-
-        print(of_best)
-        best_result_row = df_resume.iloc[-1]
         status = of_best.index(min(of_best))
-        print(f'status: {status}')
-        print(df_resume_best[status].iloc[-1])
-
+        #print(f"Status: {status}")
+        #print(f"of best: {of_best}")
+        best_result_row = df_resume_best[status].iloc[-1]
         # Avaliando as restriçõs do resultado best encontrado
-        of, g = new_obj_ic_jack_priscilla([best_result_row['X_0_BEST'], 
-                                           best_result_row['X_1_BEST'], 
-                                           best_result_row['X_2_BEST'], 
+        of, g = new_obj_ic_jack_priscilla([best_result_row['X_0_BEST'],
+                                           best_result_row['X_1_BEST'],
+                                           best_result_row['X_2_BEST'],
                                            best_result_row['X_3_BEST']], variaveis_proj)
         result = {
-            'p (kN)': f"{best_result_row['X_0_BEST']:.3e}",  
-            'ep (m)': f"{best_result_row['X_1_BEST']:.3e}",  
-            'bw (m)': f"{best_result_row['X_2_BEST']:.3e}",  
-            'h (m)': f"{best_result_row['X_3_BEST']:.3e}",  
-            'a_c (m²)': f"{of[0]:.3e}",  
-            'r (%)': f"{of[1]:.3e}"  
+            'lambda': lambda_value,
+            'X_0_BEST': best_result_row['X_0_BEST'], 'X_1_BEST': best_result_row['X_1_BEST'],
+            'X_2_BEST': best_result_row['X_2_BEST'], 'X_3_BEST': best_result_row['X_3_BEST'],
+            'a_c (m²)': of[0], 'r (%)': of[1]
         }
-
         for i, g_value in enumerate(g):
-            result[f'G_{i}'] = f"{g_value:.3e}" 
-
+            result[f'G_{i}'] = g_value
         results.append(result)
 
     #     # Atualiza logs
@@ -336,10 +346,9 @@ texts = translations[st.session_state.lang]
 st.title(texts["title"])
 st.write(texts["description"])
 
-# # Seleção de modelo
-# model = st.radio(texts["model_label"], ["AG"])# , ['Monte Carlo', "Ag"])
+# Seleção de modelo
+model = st.radio(texts["model_label"], ["AG"])# , ['Monte Carlo', "Ag"])
 
-model = 'AG'
 if model == 'Monte Carlo':
     st.subheader(texts["parameters"])
     g = st.number_input(texts["g_ext"], value=None)
