@@ -9,45 +9,45 @@ import matplotlib.pyplot as plt
 import json
 import logging
 
-# # Configuração do logger
-# logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
-# logger = logging.getLogger()
+# Configuração do logger
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
+logger = logging.getLogger()
 
-# # Criar um widget para exibir logs no Streamlit
-# class StreamlitLogger:
-#     def __init__(self):
-#         self.logs = ""
+# Criar um widget para exibir logs no Streamlit
+class StreamlitLogger:
+    def __init__(self):
+        self.logs = ""
 
-#     def write(self, message):
-#         if message.strip():
-#             self.logs += message + "\n"
-#             st.session_state.logs = self.logs
+    def write(self, message):
+        if message.strip():
+            self.logs += message + "\n"
+            st.session_state.logs = self.logs
 
-#     def flush(self):
-#         pass
+    def flush(self):
+        pass
 
-# if "logs" not in st.session_state:
-#     st.session_state.logs = ""
+if "logs" not in st.session_state:
+    st.session_state.logs = ""
 
-# log_area = StreamlitLogger()
+log_area = StreamlitLogger()
 
 
 def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, perda_final, 
                    iterations, pop_size, pres_min, pres_max, exc_min, exc_max, 
                    width_min, width_max, height_min, height_max):
     
-    # # Configuração do logger para capturar logs em tempo real
-    # log_buffer = io.StringIO()
-    # handler = logging.StreamHandler(log_buffer)
-    # formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    # handler.setFormatter(formatter)
-    # logger = logging.getLogger()
-    # logger.setLevel(logging.INFO)
-    # logger.addHandler(handler)
-    # # Placeholder para logs e barra de progresso
-    # log_area = st.empty()
-    # progress_bar = st.progress(0)
-    # logger.info("Iniciando simulação de Monte Carlo...")
+    # Configuração do logger para capturar logs em tempo real
+    log_buffer = io.StringIO()
+    handler = logging.StreamHandler(log_buffer)
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    handler.setFormatter(formatter)
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+    logger.addHandler(handler)
+    # Placeholder para logs e barra de progresso
+    log_area = st.empty()
+    progress_bar = st.progress(0)
+    logger.info("Iniciando simulação de Monte Carlo...")
     
     # Configuração de parâmetros para processamento monte carlo
     n_lambda = 10      
@@ -66,9 +66,9 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     # Criação do dataframe
     df = pd.DataFrame({'p (kN)': p_samples, 'e_p (m)': e_p_samples, 'bw (m)': bw_samples, 'h (m)': h_samples})
     a_c_list, r_list, rig_list, g_lists = [], [], [], []
-    # logger.info(f"Processing samples...")
-    # # Definir o intervalo para atualização
-    # update_interval = 100  # Atualiza o progress bar a cada 100 iterações
+    logger.info(f"Processing samples...")
+    # Definir o intervalo para atualização
+    update_interval = 100  # Atualiza o progress bar a cada 100 iterações
 
     # Iteração para avaliação de cada amostra
     for i, row in df.iterrows():
@@ -83,12 +83,12 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
         a_c_list.append(of[0])
         r_list.append(of[1])
         g_lists.append(g)
-        # # Atualiza logs em tempo real a cada N iterações
-        # if i % update_interval == 0:
-        #     log_area.text_area("Logs", log_buffer.getvalue(), height=250, key=f"log_area_sample_{i}")
-        #     progress_bar.progress((i + 1) / n_length)
-    # # Atualiza uma última vez após o processamento
-    # log_area.text_area("Logs", log_buffer.getvalue(), height=250, key=f"log_area_sample_final")
+        # Atualiza logs em tempo real a cada N iterações
+        if i % update_interval == 0:
+            log_area.text_area("Logs", log_buffer.getvalue(), height=250, key=f"log_area_sample_{i}")
+            progress_bar.progress((i + 1) / n_length)
+    # Atualiza uma última vez após o processamento
+    log_area.text_area("Logs", log_buffer.getvalue(), height=250, key=f"log_area_sample_final")
 
     # Criação das colunas de restrições e função objetivo
     df['a_c (m²)'] = a_c_list
@@ -102,8 +102,8 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     results = []
 
     # Montando a fronteira eficiente
-    for _, lambda_value in enumerate(lambda_list):
-        # logger.info(f"Iteration {iter_var + 1}/{n_lambda}.")
+    for iter_var, lambda_value in enumerate(lambda_list):
+        logger.info(f"Iteration {iter_var + 1}/{n_lambda}.")
 
         variaveis_proj = {
             'g (kN/m)': g_ext, 'q (kN/m)': q, 'l (m)': l, 'tipo de seção': 'retangular',
@@ -167,22 +167,22 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
                                            best_result_row['X_2_BEST'],
                                            best_result_row['X_3_BEST']], variaveis_proj)
         result = {
-            'p (kN)': f"{best_result_row['X_0_BEST']:.3e}",  
-            'ep (m)': f"{best_result_row['X_1_BEST']:.3e}",  
-            'bw (m)': f"{best_result_row['X_2_BEST']:.3e}",  
-            'h (m)': f"{best_result_row['X_3_BEST']:.3e}",  
-            'a_c (m²)': f"{of[0]:.3e}",  
-            'r (%)': f"{of[1]:.3e}"  
+            'p (kN)': best_result_row['X_0_BEST'],  
+            'ep (m)': best_result_row['X_1_BEST'],  
+            'bw (m)': best_result_row['X_2_BEST'],  
+            'h (m)': best_result_row['X_3_BEST'],  
+            'a_c (m²)': of[0],  
+            'r (%)': of[1] 
         }
         for i, g_value in enumerate(g):
             result[f'G_{i}'] = g_value
         results.append(result)
 
-    #     # Atualiza logs
-    #     log_area.text_area("Logs", log_buffer.getvalue(), height=250, key=f"log_area_{iter_var}")
-    #     progress_bar.progress((iter_var + 1) / n_lambda)
+        # Atualiza logs
+        log_area.text_area("Logs", log_buffer.getvalue(), height=250, key=f"log_area_{iter_var}")
+        progress_bar.progress((iter_var + 1) / n_lambda)
 
-    # logger.info("Finished simulation")
+    logger.info("Finished simulation")
 
 
     df_results = pd.DataFrame(results)
@@ -195,12 +195,13 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     ax.legend(loc='lower left')
 
     st.subheader("Resultados")
-    st.write(df_results)
+    df_results_eng = df_results.copy().applymap(lambda x: f"{x:.3e}" if isinstance(x, (int, float)) else x)
+    st.write(df_results_eng)
     st.pyplot(fig)
 
     towrite_pareto = BytesIO()
     with pd.ExcelWriter(towrite_pareto, engine="xlsxwriter") as writer:
-        df_results.to_excel(writer, index=False, sheet_name="Pareto Front")
+        df_results_eng.to_excel(writer, index=False, sheet_name="Pareto Front")
     towrite_pareto.seek(0)
     st.download_button("Baixar Fronteira Eficiente", towrite_pareto, "fronteira_eficiente.xlsx", 
                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
