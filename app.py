@@ -66,7 +66,7 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     # Criação do dataframe
     df = pd.DataFrame({'p (kN)': p_samples, 'e_p (m)': e_p_samples, 'bw (m)': bw_samples, 'h (m)': h_samples})
     a_c_list, r_list, rig_list, g_lists = [], [], [], []
-    logger.info(f"Processing samples...")
+    logger.info(f"Processando amostras...")
     # Definir o intervalo para atualização
     update_interval = 100  # Atualiza o progress bar a cada 100 iterações
 
@@ -102,9 +102,8 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     results = []
 
     # Montando a fronteira eficiente
+    logger.info(f"Montando a fronteira eficiente...")
     for iter_var, lambda_value in enumerate(lambda_list):
-        logger.info(f"Iteration {iter_var + 1}/{n_lambda}.")
-
         variaveis_proj = {
             'g (kN/m)': g_ext, 'q (kN/m)': q, 'l (m)': l, 'tipo de seção': 'retangular',
             'fck,ato (kPa)': f_cj * 1E3, 'fck (kPa)': f_c * 1E3, 'lambda': lambda_value, 'rp': 1E6,
