@@ -96,8 +96,13 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     for idx, g_list in enumerate(zip(*g_lists)):
         df[f'g_{idx}'] = g_list
 
+    # Retirada do dataframe dos valores que não atendem as restrições
     df = df[(df[[col for col in df.columns if col.startswith('g_')]] <= 0).all(axis=1)].reset_index(drop=True)
+
+    # Prepação do modelo para o algoritmo genético
     ac_min, ac_max = df['a_c (m²)'].min(), df['a_c (m²)'].max()
+
+    # Lista de possíveis áreas para a busca multiobjetivo
     lambda_list = np.linspace(ac_min, ac_max, n_lambda)
     results = []
 
@@ -105,6 +110,7 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     for _, lambda_value in enumerate(lambda_list):
         # logger.info(f"Iteration {iter_var + 1}/{n_lambda}.")
 
+        # Atribuição dos valores de entrada do AG
         variaveis_proj = {
             'g (kN/m)': g_ext, 'q (kN/m)': q, 'l (m)': l, 'tipo de seção': 'retangular',
             'fck,ato (kPa)': f_cj * 1E3, 'fck (kPa)': f_c * 1E3, 'lambda': lambda_value, 'rp': 1E6,
@@ -161,18 +167,19 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
             df_resume_best.append(df_resume)
             of_best.append(df_resume.iloc[-1]['OF BEST'])
         status = of_best.index(min(of_best))
+        #print(f"Status: {status}")
+        #print(f"of best: {of_best}")
         best_result_row = df_resume_best[status].iloc[-1]
+        # Avaliando as restriçõs do resultado best encontrado
         of, g = new_obj_ic_jack_priscilla([best_result_row['X_0_BEST'],
                                            best_result_row['X_1_BEST'],
                                            best_result_row['X_2_BEST'],
                                            best_result_row['X_3_BEST']], variaveis_proj)
         result = {
-            'p (kN)': f"{best_result_row['X_0_BEST']:.3e}",  
-            'ep (m)': f"{best_result_row['X_1_BEST']:.3e}",  
-            'bw (m)': f"{best_result_row['X_2_BEST']:.3e}",  
-            'h (m)': f"{best_result_row['X_3_BEST']:.3e}",  
-            'a_c (m²)': f"{of[0]:.3e}",  
-            'r (%)': f"{of[1]:.3e}"  
+            'lambda': lambda_value,
+            'X_0_BEST': best_result_row['X_0_BEST'], 'X_1_BEST': best_result_row['X_1_BEST'],
+            'X_2_BEST': best_result_row['X_2_BEST'], 'X_3_BEST': best_result_row['X_3_BEST'],
+            'a_c (m²)': of[0], 'r (%)': of[1]
         }
         for i, g_value in enumerate(g):
             result[f'G_{i}'] = g_value
@@ -184,9 +191,10 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
 
     # logger.info("Finished simulation")
 
-
+    # Salvando os resultados
     df_results = pd.DataFrame(results)
 
+    # Gerando a figura para tela
     fig, ax = plt.subplots()
     ax.scatter(df_results['a_c (m²)'], df_results['r (%)'], color='red', label='Fronteira eficiente') # AG
     ax.scatter(df['a_c (m²)'], df['r (%)'], color='#dcdcdc', label='Monte Carlo')                     # Monte Carlo
@@ -194,10 +202,12 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     ax.set_ylabel('Carga $g$ estabilizada (%)', fontsize=14)
     ax.legend(loc='lower left')
 
+    # Exibindo os resultados
     st.subheader("Resultados")
     st.write(df_results)
     st.pyplot(fig)
 
+    # Resultado em Excel
     towrite_pareto = BytesIO()
     with pd.ExcelWriter(towrite_pareto, engine="xlsxwriter") as writer:
         df_results.to_excel(writer, index=False, sheet_name="Pareto Front")
@@ -260,20 +270,22 @@ def monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_m
 
         df = df[(df[[col for col in df.columns if col.startswith('g_')]] <= 0).all(axis=1)]
         df.reset_index(drop=True, inplace=True)
-        st.subheader("Simulation results")
-        st.table(df) 
+        # st.subheader("Simulation results")
+        # st.table(df) 
 
-        towrite = BytesIO()
-        with pd.ExcelWriter(towrite, engine="xlsxwriter") as writer:
-            df.to_excel(writer, index=False, sheet_name="Simulação")
-        towrite.seek(0)  
-        st.download_button(
-            label="Download results",
-            data=towrite,
-            file_name="simulacao_monte_carlo.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
+        # # Salvando a planilha em um buffer (BytesIO)
+        # towrite = BytesIO()
+        # with pd.ExcelWriter(towrite, engine="xlsxwriter") as writer:
+        #     df.to_excel(writer, index=False, sheet_name="Simulação")
+        # towrite.seek(0)  
+        # st.download_button(
+        #     label="Download results",
+        #     data=towrite,
+        #     file_name="simulacao_monte_carlo.xlsx",
+        #     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        # )
 
+        # Plotar gráfico de dispersão e Pareto front
         fix, ax = plt.subplots()
         df_sorted = df.sort_values(by='a_c (m²)', ascending=True).reset_index(drop=True)
         pareto_indices = []
@@ -300,6 +312,7 @@ def monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_m
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
 
+        # Plotar o gráfico
         ax.scatter(df['a_c (m²)'], df['r'], color='blue', alpha=0.7)
         ax.plot(pareto_df['a_c (m²)'], pareto_df['r'], color='red', marker='o', linewidth=2)
         ax.set_title("Pareto front", fontsize=14)
@@ -361,7 +374,8 @@ if model == 'Monte Carlo':
         width_max = st.number_input(texts["width_max"], value=None)
         height_max = st.number_input(texts["height_max"], value=None)
 
-    monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_max, width_min, width_max, height_min, height_max)
+    # Chamar função Monte Carlo (supondo que ela existe)
+    # monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_max, width_min, width_max, height_min, height_max)
 
 elif model == "AG":
     st.subheader(texts["parameters"])
@@ -385,18 +399,19 @@ elif model == "AG":
     col3, col4 = st.columns(2)
 
     with col3:
-        iterations = st.number_input(texts["iterations"], value=80, step=1)
+        iterations = st.number_input(texts["iterations"], value=None)
         pres_min = st.number_input(texts["prestressed_min"], value=None)
         exc_min = st.number_input(texts["eccentricity_min"], value=None)
         width_min = st.number_input(texts["width_min"], value=None)
         height_min = st.number_input(texts["height_min"], value=None)
 
     with col4:
-        pop_size = st.number_input(texts["pop_size"], value=20, step=1)
+        pop_size = st.number_input(texts["pop_size"], value=None)
         pres_max = st.number_input(texts["prestressed_max"], value=None)
         exc_max = st.number_input(texts["eccentricity_max"], value=None)
         width_max = st.number_input(texts["width_max"], value=None)
         height_max = st.number_input(texts["height_max"], value=None)
 
     if st.button(texts["run_simulation"]):
+        #print(f"Executando simulação com os parâmetros selecionados...")
         ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, perda_final, iterations, pop_size, pres_min, pres_max, exc_min, exc_max, width_min, width_max, height_min, height_max)
