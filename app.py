@@ -64,7 +64,7 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     h_samples = np.random.uniform(h[0], h[1], n)
 
     # Criação do dataframe
-    df = pd.DataFrame({'p (kN)': p_samples, 'e_p (m)': e_p_samples, 'bw (m)': bw_samples, 'h (m)': h_samples})
+    df = pd.DataFrame({'pk (kN)': p_samples, 'e_p (m)': e_p_samples, 'bw (m)': bw_samples, 'h (m)': h_samples})
     a_c_list, r_list, rig_list, g_lists = [], [], [], []
     logger.info(f"Processando amostras...")
     # Definir o intervalo para atualização
@@ -79,7 +79,7 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
             'flecha limite de serviço (m)': l/250, 'coeficiente parcial para carga q': psi,
             'perda inicial de protensão (%)': perda_inicial, 'perda total de protensão (%)': perda_final
         }
-        of, g = new_obj_ic_jack_priscilla([row['p (kN)'], row['e_p (m)'], row['bw (m)'], row['h (m)']], fixed_variables)
+        of, g = new_obj_ic_jack_priscilla([row['pk (kN)'], row['e_p (m)'], row['bw (m)'], row['h (m)']], fixed_variables)
         a_c_list.append(of[0])
         r_list.append(of[1])
         g_lists.append(g)
@@ -104,6 +104,7 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     # Montando a fronteira eficiente
     logger.info(f"Montando a fronteira eficiente...")
     for iter_var, lambda_value in enumerate(lambda_list):
+        logger.info(f"Processando {(iter_var+1)*10} % ...")
         variaveis_proj = {
             'g (kN/m)': g_ext, 'q (kN/m)': q, 'l (m)': l, 'tipo de seção': 'retangular',
             'fck,ato (kPa)': f_cj * 1E3, 'fck (kPa)': f_c * 1E3, 'lambda': lambda_value, 'rp': 1E6,
@@ -166,7 +167,7 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
                                            best_result_row['X_2_BEST'],
                                            best_result_row['X_3_BEST']], variaveis_proj)
         result = {
-            'p (kN)': best_result_row['X_0_BEST'],  
+            'pk (kN)': best_result_row['X_0_BEST'],  
             'ep (m)': best_result_row['X_1_BEST'],  
             'bw (m)': best_result_row['X_2_BEST'],  
             'h (m)': best_result_row['X_3_BEST'],  
@@ -181,7 +182,8 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
         log_area.text_area("Logs", log_buffer.getvalue(), height=250, key=f"log_area_{iter_var}")
         progress_bar.progress((iter_var + 1) / n_lambda)
 
-    logger.info("Fim da simulação de Monte Carlo.")
+    logger.info("Processo de simulação concluído.")
+    logger.info("Fim da simulação com o otimizador.")
     log_area.text_area("Logs", log_buffer.getvalue(), height=250, key="log_area_final")
 
 
@@ -189,13 +191,16 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
 
     fig, ax = plt.subplots()
     ax.scatter(df_results['a_c (m²)'], df_results['r (%)'], color='red', label='Fronteira eficiente') # AG
+    df_results = df_results.sort_values(by='a_c (m²)')
+    ax.plot(df_results['a_c (m²)'], df_results['r (%)'], color='red', linestyle='-', linewidth=2)
+
     ax.scatter(df['a_c (m²)'], df['r (%)'], color='#dcdcdc', label='Monte Carlo')                     # Monte Carlo
     ax.set_xlabel('Área da seção (m²)', fontsize=14)
     ax.set_ylabel('Carga $g$ estabilizada (%)', fontsize=14)
     ax.legend(loc='lower left')
 
     st.subheader("Resultados")
-    df_results_eng = df_results.copy().applymap(lambda x: f"{x:.3e}" if isinstance(x, (int, float)) else x)
+    df_results_eng = df_results.copy().map(lambda x: f"{x:.3e}" if isinstance(x, (int, float)) else x)
     st.write(df_results_eng)
     st.pyplot(fig)
 
@@ -222,7 +227,7 @@ def monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_m
         e_p_samples = list(np.random.uniform(e_p[0], e_p[1], n))
         bw_samples = list(np.random.uniform(bw[0], bw[1], n))
         h_samples = list(np.random.uniform(h[0], h[1], n))
-        df = {'p (kN)': p_samples, 'e_p (m)': e_p_samples, 'bw (m)': bw_samples, 'h (m)': h_samples}
+        df = {'pk (kN)': p_samples, 'e_p (m)': e_p_samples, 'bw (m)': bw_samples, 'h (m)': h_samples}
         df = pd.DataFrame(df)
 
         a_c_list = []
@@ -247,7 +252,7 @@ def monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_m
 
 
         for _, row in df.iterrows():
-            of, g = new_obj_ic_jack_priscilla([row['p (kN)'], row['e_p (m)'], row['bw (m)'], row['h (m)']], fixed_variables)
+            of, g = new_obj_ic_jack_priscilla([row['pk (kN)'], row['e_p (m)'], row['bw (m)'], row['h (m)']], fixed_variables)
             a_c_list.append(of[0])
             r_list.append(of[1])
             g_lists.append(g)
