@@ -391,7 +391,7 @@ elif model == "AG":
     col3, col4 = st.columns(2)
 
     with col3:
-        iterations = st.number_input(texts["iterations"], value=80, step=1)
+        iterations = st.number_input(texts["iterations"], value=100, step=1)
         pres_min = st.number_input(texts["prestressed_min"], value=None)
         exc_min = st.number_input(texts["eccentricity_min"], value=None)
         width_min = st.number_input(texts["width_min"], value=None)
