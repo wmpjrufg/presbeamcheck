@@ -539,12 +539,12 @@ def obj_ic_jack_priscilla(x: float, none_variable: Any):
     sigma_max_trac = -1.50 * f_ctkinf
 
     # Restrição de limite de tensão ft <= sigma <= 0, para base
-    g.append(sigma_b_serv_mv / 1E-10 - 1)                                  # g_9
+    g.append(sigma_b_serv_mv/abs(sigma_max_trac))                          # g_9
     g.append((sigma_max_trac - sigma_b_serv_mv) / abs(sigma_max_trac))     # g_10
     
     # Restrição de limite de tensão 0 <= sigma <= fc, para base
     g.append(sigma_t_serv_mv / sigma_max_comp - 1)                         # g_11   
-    g.append((1E-10 - sigma_t_serv_mv) / abs(1E-10))                       # g_12
+    g.append(-sigma_t_serv_mv / sigma_max_comp)                            # g_12
 
     # Restrição de flecha no armazenamento
     delta_ato_0 = flecha_biapoiada_carga_distribuida(l, e_cs_ato, i_c, g_pp)
@@ -687,12 +687,12 @@ def new_obj_ic_jack_priscilla(x: float, none_variable: Any):
     sigma_max_trac = -1.50 * f_ctkinf
 
     # Restrição de limite de tensão ft <= sigma <= 0, para base
-    g.append(sigma_b_serv_mv / 1E-10 - 1)                                  # g_9
+    g.append(sigma_b_serv_mv/abs(sigma_max_trac))                          # g_9
     g.append((sigma_max_trac - sigma_b_serv_mv) / abs(sigma_max_trac))     # g_10
     
     # Restrição de limite de tensão 0 <= sigma <= fc, para base
     g.append(sigma_t_serv_mv / sigma_max_comp - 1)                         # g_11   
-    g.append((1E-10 - sigma_t_serv_mv) / abs(1E-10))                       # g_12
+    g.append(-sigma_t_serv_mv / sigma_max_comp)                            # g_12
 
     # Restrição de flecha no armazenamento
     delta_ato_0 = flecha_biapoiada_carga_distribuida(l, e_cs_ato, i_c, g_pp)
