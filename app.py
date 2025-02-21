@@ -200,7 +200,7 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     ax.legend(loc='lower left')
 
     st.subheader("Resultados")
-    df_results_eng = df_results.copy().map(lambda x: f"{x:.3e}" if isinstance(x, (int, float)) else x)
+    df_results_eng = df_results.copy().map(lambda x: f"{x:.8e}" if isinstance(x, (int, float)) else x)
     st.write(df_results_eng)
     st.pyplot(fig)
 
