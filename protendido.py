@@ -506,13 +506,15 @@ def obj_ic_jack_priscilla(x: float, none_variable: Any):
     # Limites de tensão com base no tipo de protensão
     sigma_max_trac = -1.20 * f_ctmj
     f_ck /= 1E3
+    f_ck_ato /= 1E3
     if f_ck <= 50:
         sigma_max_comp = 0.70 * f_ck_ato
+        sigma_max_comp *= 1E3
     else:
-        f_ck_ato /= 1E3
-        sigma_max_comp = (0.70 * (1 - (f_ck_ato - 50) / 200)) * 1E3
-        f_ck_ato *= 1E3
+        sigma_max_comp = (0.70 * (1 - (f_ck_ato - 50) / 200))
+        sigma_max_comp *= 1E3
     f_ck *= 1E3
+    f_ck_ato *= 1E3
 
     # Restrição de seção transversal para segunda função objetivo
     g.append(np.abs(a_c - eta)/0.001 - 1)                                 # g_0
@@ -652,13 +654,15 @@ def new_obj_ic_jack_priscilla(x: float, none_variable: Any):
     # Limites de tensão com base no tipo de protensão
     sigma_max_trac = -1.20 * f_ctmj
     f_ck /= 1E3
+    f_ck_ato /= 1E3
     if f_ck <= 50:
         sigma_max_comp = 0.70 * f_ck_ato
+        sigma_max_comp *= 1E3
     else:
-        f_ck_ato /= 1E3
-        sigma_max_comp = (0.70 * (1 - (f_ck_ato - 50) / 200)) * 1E3
-        f_ck_ato *= 1E3
+        sigma_max_comp = (0.70 * (1 - (f_ck_ato - 50) / 200))
+        sigma_max_comp *= 1E3
     f_ck *= 1E3
+    f_ck_ato *= 1E3
 
     # Restrição de seção transversal para segunda função objetivo
     #g.append(np.abs(a_c - eta)/0.001 - 1)                                 # g_0
