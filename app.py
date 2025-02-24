@@ -430,6 +430,6 @@ elif model == "AG":
             df_results_eng.to_excel(writer, index=False, sheet_name="Pareto Front")
         towrite_pareto.seek(0)
 
-        # Botão de download sem refazer o gráfico
+        # Botão de download
         st.download_button("Baixar Fronteira Eficiente", towrite_pareto, "fronteira_eficiente.xlsx",
                         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
