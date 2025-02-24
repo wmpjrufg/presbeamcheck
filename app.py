@@ -199,17 +199,19 @@ def ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, per
     ax.set_ylabel('Carga $g$ estabilizada (%)', fontsize=14)
     ax.legend(loc='lower left')
 
-    st.subheader("Resultados")
-    df_results_eng = df_results.copy().map(lambda x: f"{x:.8e}" if isinstance(x, (int, float)) else x)
-    st.write(df_results_eng)
-    st.pyplot(fig)
+    # st.subheader("Resultados")
+    # df_results_eng = df_results.copy().map(lambda x: f"{x:.3e}" if isinstance(x, (int, float)) else x)
+    # st.write(df_results_eng)
+    # st.pyplot(fig)
 
-    towrite_pareto = BytesIO()
-    with pd.ExcelWriter(towrite_pareto, engine="xlsxwriter") as writer:
-        df_results_eng.to_excel(writer, index=False, sheet_name="Pareto Front")
-    towrite_pareto.seek(0)
-    st.download_button("Baixar Fronteira Eficiente", towrite_pareto, "fronteira_eficiente.xlsx", 
-                       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    # towrite_pareto = BytesIO()
+    # with pd.ExcelWriter(towrite_pareto, engine="xlsxwriter") as writer:
+    #     df_results_eng.to_excel(writer, index=False, sheet_name="Pareto Front")
+    # towrite_pareto.seek(0)
+    # st.download_button("Baixar Fronteira Eficiente", towrite_pareto, "fronteira_eficiente.xlsx", 
+    #                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+    return df_results, fig
 
 
 def monte_carlo(g, q, l, f_c, f_cj, pop_size, pres_min, pres_max, exc_min, exc_max, width_min, width_max, height_min, height_max):
@@ -405,4 +407,29 @@ elif model == "AG":
         height_max = st.number_input(texts["height_max"], value=None)
 
     if st.button(texts["run_simulation"]):
-        ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, perda_final, iterations, pop_size, pres_min, pres_max, exc_min, exc_max, width_min, width_max, height_min, height_max)
+        df_results, fig = ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, perda_final, iterations, pop_size, pres_min, pres_max, exc_min, exc_max, width_min, width_max, height_min, height_max)
+
+        # Salvar na session_state para evitar recomputação
+        st.session_state.df_results = df_results
+        st.session_state.fig = fig
+
+    # Verifica se os resultados já foram processados
+    if "df_results" in st.session_state and "fig" in st.session_state:
+        df_results = st.session_state.df_results
+        fig = st.session_state.fig
+
+        # Exibir o gráfico e os resultados
+        st.subheader("Resultados")
+        df_results_eng = df_results.copy().map(lambda x: f"{x:.3e}" if isinstance(x, (int, float)) else x)
+        st.write(df_results_eng)
+        st.pyplot(fig)
+
+        # Criar o arquivo para download
+        towrite_pareto = BytesIO()
+        with pd.ExcelWriter(towrite_pareto, engine="xlsxwriter") as writer:
+            df_results_eng.to_excel(writer, index=False, sheet_name="Pareto Front")
+        towrite_pareto.seek(0)
+
+        # Botão de download sem refazer o gráfico
+        st.download_button("Baixar Fronteira Eficiente", towrite_pareto, "fronteira_eficiente.xlsx",
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
