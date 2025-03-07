@@ -1,4 +1,5 @@
 from protendido import obj_ic_jack_priscilla, new_obj_ic_jack_priscilla
+from theory_texts import texto_01
 from metapy_toolbox import initial_population_01, genetic_algorithm_01
 import io
 from io import BytesIO
@@ -213,6 +214,25 @@ def ag_monte_carlo(g_ext: float, q: float, l: float, f_c: float, f_cj: float, ph
     return df_results, fig
 
 
+st.write("""
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: justify;
+        }
+        h2 {
+            text-align: justify;
+        }
+    </style>
+</head>
+        """, unsafe_allow_html=True)
+
 # Carregar traduções do JSON
 with open("translations.json", "r", encoding="utf-8") as file:
     translations = json.load(file)
@@ -232,6 +252,8 @@ texts = translations[st.session_state.lang]
 
 st.title(texts["title"])
 st.write(texts["description"])
+
+texto_01()
 
 st.subheader(texts["parameters"])
 col1, col2 = st.columns(2)
