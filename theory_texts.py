@@ -122,12 +122,47 @@ def texto_01():
     st.header("Verificação da geometria")
 
     st.write("""
-    Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy 
-    text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has 
-    survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was 
-    popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop 
-    publishing software like Aldus PageMaker including versions of Lorem Ipsum.
+    A verificação geométrica de vigas protendidas combina exigências normativas e critérios empíricos para assegurar estabilidade, 
+    funcionalidade e viabilidade construtiva. Segundo a ABNT NBR 6118, a relação vão/altura, definida no item 18.3.1 (restrição g16), 
+    evita deformações excessivas e garante a esbeltez adequada da estrutura, conforme a equação (3.11). 
     """)
+
+    st.latex(r"""
+    \frac{ℓ}{h} \geq 2 \tag{3.11}
+    """)
+
+    st.markdown(r"""
+    Já o item 15.10 (restrição g18) impõe $b_w ≥ \frac{ℓ}{50}$, limitando a largura da alma para prevenir flambagem lateral sob cargas 
+    críticas, conforme a equação (3.12).
+    """)
+
+    st.latex(r"""
+    b_w \geq \frac{ℓ}{50} \tag{3.12}
+    """)
+
+    st.write("""
+    A experiência prática dos construtores introduz regras como a limitação da excentricidade dos cabos de protensão (restrição g15), 
+    conforme a equação (3.13), que previne interferências com armaduras passivas e simplifica a montagem.
+    """)
+
+    st.latex(r"""
+    e_p \leq 0.5h \tag{3.13}
+    """)
+
+    st.write("""
+    A restrição de largura máxima (g17), conforme a equação (3.14), que equilibra a seção transversal para evitar falhas como má distribuição 
+    do concreto ou dificuldades na fixação de fôrmas.
+    """)
+
+    st.latex(r"""
+    b_w \leq 0.5h \tag{3.14}
+    """)
+
+    st.write("""
+    Assim, a geometria da viga é validada não apenas por cálculos, mas também por parâmetros que harmonizam desempenho estrutural, 
+    conformidade normativa e eficiência construtiva.
+    """)
+    
     st.write("")
 
 if __name__ == "__main__":
