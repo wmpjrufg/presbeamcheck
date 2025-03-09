@@ -125,8 +125,8 @@ def ag_monte_carlo(g_ext: float, q: float, l: float, f_c: float, f_cj: float, ph
                             'objective function': obj_ic_jack_priscilla,
                             'algorithm parameters': {
                                 'selection': {'type': 'roulette'},
-                                'crossover': {'crossover rate (%)': 100, 'type': 'linear'},
-                                'mutation': {'mutation rate (%)': 20, 'type': 'hill climbing', 'cov (%)': 20, 'pdf': 'gaussian'},
+                                'crossover': {'crossover rate (%)': 90, 'type': 'linear'},
+                                'mutation': {'mutation rate (%)': 20, 'type': 'hill climbing', 'cov (%)': 15, 'pdf': 'uniform'},
                             }
                         }
 
