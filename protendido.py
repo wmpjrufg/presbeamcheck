@@ -3,14 +3,6 @@ from typing import Any
 
 import numpy as np
 
-
-# def grau_protensao_i(e_p: float, m_g: float, m_q: float, p: float, w_b: float, a_c: float) -> float:
-#     m_p = p * e_p
-#     m_o = p / a_c * w_b + m_p
-#     m_t = m_g + m_q
-#     return m_o / m_t
-
-
 def propriedades_geometricas(geom: list, tipo: str, impressao: bool=False) -> tuple:
     """Esta função determina as propriedades geométricas de seções transversais retangulares, I de abas paralelas e I de abas inclinadas.
 
@@ -493,8 +485,7 @@ def obj_ic_jack_priscilla(x: float, none_variable: Any):
     # Função objetivo que maximiza a compensação de protensão
     # of = lambdaa * (a_c / 0.18) - (1 - lambdaa) * kappa_p
     kappa_p = grau_protensao_ii(e_p, a_c, g_ext, p, l)
-    # of = -kappa_p
-    of = a_c
+    of = -kappa_p
 
     # Tensão no topo e na base na transferência da protensão considerando as perdas iniciais de protensão
     p_sd_ato = 1.10 * ((1 - perda_inicial) * p)
@@ -589,6 +580,7 @@ def obj_ic_jack_priscilla(x: float, none_variable: Any):
         of += rp * max(0, i) ** 2
 
     return of
+
 
 def obj_ic_jack_priscilla_sobol(x: float, none_variable: Any):
     """
