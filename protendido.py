@@ -874,3 +874,181 @@ def new_obj_ic_jack_priscilla(x: float, none_variable: Any):
     #     g.append(sigma_b_ato_mv_serv / sigma_max_comp - 1)
 
     return of, g
+
+
+def new_obj_ic_jack_pris_html(x: float, none_variable: Any):
+    # Variáveis de entrada
+    p = x[0]
+    e_p = x[1]
+    b_w = x[2]
+    h = x[3]
+    g = []
+    tipo = none_variable['tipo de seção']
+    g_ext = none_variable['g (kN/m)']
+    q = none_variable['q (kN/m)']
+    l = none_variable['l (m)']
+    f_ck_ato = none_variable['fck,ato (kPa)']
+    f_ck = none_variable['fck (kPa)']
+    phi_a = none_variable['fator de fluência para o ato']
+    phi_b = none_variable['fator de fluência para o serviço']
+    delta_lim_fabrica = none_variable['flecha limite de fabrica (m)']
+    delta_lim_serv = none_variable['flecha limite de serviço (m)']
+    phi_els = none_variable['coeficiente parcial para carga q']
+    perda_inicial = none_variable['perda inicial de protensão (%)'] / 100
+    perda_total = none_variable['perda total de protensão (%)'] / 100
+
+    # Propriedades do material
+    e_ci, e_cs, e_ci_ato, e_cs_ato = modulo_elasticidade_concreto('gra', f_ck, f_ck_ato, False)
+    f_ctmj, f_ctkinfj, f_ctksupj, f_ctm, f_ctkinf, f_ctksup = resistencia_concreto(f_ck, f_ck_ato, False)
+
+    # Propriedades geométricas
+    # Problema retangular
+    a_c, y_t, y_b, i_c, w_t, w_b = propriedades_geometricas([b_w, h], tipo)
+
+    # Esforços
+    m_gext, _ = esforcos_bi_apoiada(g_ext, l)
+    m_q, _ = esforcos_bi_apoiada(q, l)
+    g_pp = a_c * 25
+    m_gpp, _ = esforcos_bi_apoiada(g_pp, l)
+    m_sdserv = m_gext + phi_els * m_q
+
+    # Função objetivo que maximiza a compensação de protensão
+    kappa_p = grau_protensao_ii(e_p, a_c, g_ext, p, l)
+    of = [a_c, kappa_p]
+
+    # Tensão no topo e na base na transferência da protensão considerando as perdas iniciais de protensão
+    p_sd_ato = 1.10 * ((1 - perda_inicial) * p)
+    m_psd_ato = p_sd_ato * e_p
+    sigma_t_ato_mv = (p_sd_ato / a_c) - (p_sd_ato * e_p / w_t) + (m_gpp / w_t)
+    sigma_t_ato_ap = (p_sd_ato / a_c) - (p_sd_ato * e_p / w_t)
+    sigma_b_ato_mv = (p_sd_ato / a_c) + (p_sd_ato * e_p / w_b) - (m_gpp / w_b)
+    sigma_b_ato_ap = (p_sd_ato / a_c) + (p_sd_ato * e_p / w_b)
+
+    # Limites de tensão com base no tipo de protensão
+    sigma_max_trac = -1.20 * f_ctmj
+    f_ck /= 1E3
+    f_ck_ato /= 1E3
+    if f_ck <= 50:
+        sigma_max_comp = 0.70 * f_ck_ato
+        sigma_max_comp *= 1E3
+    else:
+        sigma_max_comp = (0.70 * (1 - (f_ck_ato - 50) / 200))
+        sigma_max_comp *= 1E3
+    f_ck *= 1E3
+    f_ck_ato *= 1E3
+
+    # Restrição de limite de tensão ft <= sigma <= fc
+    g.append(sigma_t_ato_mv / sigma_max_comp - 1)                         # g_1
+    g.append((sigma_max_trac - sigma_t_ato_mv) / abs(sigma_max_trac))     # g_2
+    g.append(sigma_t_ato_ap / sigma_max_comp - 1)                         # g_3   
+    g.append((sigma_max_trac - sigma_t_ato_ap) / abs(sigma_max_trac))     # g_4
+    g.append(sigma_b_ato_mv / sigma_max_comp - 1)                         # g_5
+    g.append((sigma_max_trac - sigma_b_ato_mv) / abs(sigma_max_trac))     # g_6
+    g.append(sigma_b_ato_ap / sigma_max_comp - 1)                         # g_7
+    g.append((sigma_max_trac - sigma_b_ato_ap) / abs(sigma_max_trac))     # g_8
+
+    # Tensão no topo e na base no serviço considerando as perdas totais de protensão
+    p_sd_serv = 1.10 * ((1 - perda_total) * p)
+    sigma_t_serv_mv = (p_sd_serv / a_c) - (p_sd_serv * e_p / w_t) + (m_gpp / w_t) + (m_sdserv / w_t)
+    sigma_b_serv_mv = (p_sd_serv / a_c) + (p_sd_serv * e_p / w_b) - (m_gpp / w_b) - (m_sdserv / w_b)
+
+    # Limites de tensão com base no tipo de protensão
+    sigma_max_comp = 0.60 * f_ck
+    sigma_max_trac = -1.50 * f_ctkinf
+
+    # Restrição de limite de tensão ft <= sigma <= 0, para base
+    g.append(sigma_b_serv_mv/abs(sigma_max_trac))                          # g_9
+    g.append((sigma_max_trac - sigma_b_serv_mv) / abs(sigma_max_trac))     # g_10
+    
+    # Restrição de limite de tensão 0 <= sigma <= fc, para base
+    g.append(sigma_t_serv_mv / sigma_max_comp - 1)                         # g_11   
+    g.append(-sigma_t_serv_mv / sigma_max_comp)                            # g_12
+
+    # Restrição de flecha no armazenamento
+    delta_ato_0 = flecha_biapoiada_carga_distribuida(l, e_cs_ato, i_c, g_pp)
+    delta_ato_1 = flecha_biapoiada_carga_protensao(l, e_cs_ato, i_c, m_psd_ato)
+    delta_ato = delta_ato_0 + (-delta_ato_1)
+    g.append(np.abs(delta_ato) / delta_lim_fabrica - 1)                    # g_13
+
+    # Restrição de flecha no serviço
+    delta_serv_0 = flecha_biapoiada_carga_distribuida(l, e_cs, i_c, g_ext) 
+    delta_serv_1 = flecha_biapoiada_carga_distribuida(l, e_cs, i_c, phi_els * q)
+    delta_total = phi_a * delta_ato  + phi_b * (delta_serv_0 + delta_serv_1)
+    g.append(delta_total / delta_lim_serv - 1)                             # g_14
+
+    # Restrição construtiva
+    g.append(e_p / (0.90 * 0.50 * h)  - 1)                                 # g_15
+
+    # Restrição de esbeltez 18.3.1
+    g.append(2 / (l / h) - 1)                                              # g_16
+
+    # Restrição de largura máxima
+    g.append(b_w / (h * 0.50) - 1)                                         # g_17
+
+    # Restrição de instabilidade 15.10
+    g.append((l / 50) / b_w - 1)                                           # g_18
+
+    # Criar conteúdo HTML
+    html_content = f"""
+    <html>
+    <head><title>Resultados</title></head>
+    <body>
+    <h1>Propriedades dos Materiais</h1>
+    <ul>
+        <li>e_ci: {e_ci}</li>
+        <li>e_cs: {e_cs}</li>
+        <li>e_ci_ato: {e_ci_ato}</li>
+        <li>e_cs_ato: {e_cs_ato}</li>
+        <li>f_ctmj: {f_ctmj}</li>
+        <li>f_ctkinfj: {f_ctkinfj}</li>
+        <li>f_ctksupj: {f_ctksupj}</li>
+        <li>f_ctm: {f_ctm}</li>
+        <li>f_ctkinf: {f_ctkinf}</li>
+        <li>f_ctksup: {f_ctksup}</li>
+    </ul>
+    
+    <h1>Propriedades Geométricas</h1>
+    <ul>
+        <li>a_c: {a_c}</li>
+        <li>y_t: {y_t}</li>
+        <li>y_b: {y_b}</li>
+        <li>i_c: {i_c}</li>
+        <li>w_t: {w_t}</li>
+        <li>w_b: {w_b}</li>
+    </ul>
+    
+    <h1>Esforços</h1>
+    <ul>
+        <li>m_gext: {m_gext}</li>
+        <li>m_q: {m_q}</li>
+        <li>g_pp: {g_pp}</li>
+        <li>m_gpp: {m_gpp}</li>
+        <li>m_sdserv: {m_sdserv}</li>
+    </ul>
+    
+    <h1>Funções Objetivo</h1>
+    <ul>
+        <li>f1 = {a_c}</li>
+        <li>f2 = {kappa_p}</li>
+    </ul>
+    
+    <h1>Tensões ato da Protensão</h1>
+    <ul>
+        <li>sigma_t_ato_mv: {sigma_t_ato_mv}</li>
+        <li>sigma_t_ato_ap: {sigma_t_ato_ap}</li>
+        <li>sigma_b_ato_mv: {sigma_b_ato_mv}</li>
+        <li>sigma_b_ato_ap: {sigma_b_ato_ap}</li>
+        <li>sigma_max_comp: {sigma_max_comp}</li>
+        <li>sigma_max_trac: {sigma_max_trac}</li>
+    </ul>
+    
+    <h1>Restrições</h1>
+    <ul>
+        {''.join([f'<li>g{i+1}: {g[i]}</li>' for i in range(18)])}
+    </ul>
+    
+    </body>
+    </html>
+    """
+    
+    return html_content
