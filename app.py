@@ -276,14 +276,14 @@ st.subheader(texts["algorithm_setup"])
 col3, col4 = st.columns(2)
 
 with col3:
-    iterations = st.number_input(texts["iterations"], value=100, step=1)
+    iterations = st.number_input(texts["iterations"], value=150, step=1)
     pres_min = st.number_input(texts["prestressed_min"], value=None)
     exc_min = st.number_input(texts["eccentricity_min"], value=None)
     width_min = st.number_input(texts["width_min"], value=None)
     height_min = st.number_input(texts["height_min"], value=None)
 
 with col4:
-    pop_size = st.number_input(texts["pop_size"], value=20, step=1)
+    pop_size = st.number_input(texts["pop_size"], value=25, step=1)
     pres_max = st.number_input(texts["prestressed_max"], value=None)
     exc_max = st.number_input(texts["eccentricity_max"], value=None)
     width_max = st.number_input(texts["width_max"], value=None)
