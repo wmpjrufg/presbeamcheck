@@ -214,25 +214,8 @@ def ag_monte_carlo(g_ext: float, q: float, l: float, f_c: float, f_cj: float, ph
     return df_results, fig
 
 
-def generate_html_download(pres_min: float, pres_max: float, exc_min: float, exc_max: float, width_min: float, width_max: float, height_min: float, height_max: float, g_ext: float, q: float, l: float, f_c: float, f_cj: float, phi_a: float, phi_b: float, psi: float, perda_inicial: float, perda_final: float):
-    # Configuração de parâmetros para processamento monte carlo    
-    n_length = 5000    
-    p = [pres_min, pres_max]
-    e_p = [exc_min, exc_max]
-    bw = [width_min, width_max]
-    h = [height_min, height_max]
-    n = n_length
-    np.random.seed(42)
-    p_samples = np.random.uniform(p[0], p[1], n)
-    e_p_samples = np.random.uniform(e_p[0], e_p[1], n)
-    bw_samples = np.random.uniform(bw[0], bw[1], n)
-    h_samples = np.random.uniform(h[0], h[1], n)
-
-    # Criação do dataframe
-    df = pd.DataFrame({'pk (kN)': p_samples, 'e_p (m)': e_p_samples, 'bw (m)': bw_samples, 'h (m)': h_samples})
-    print(len(df))
-
-    # Iteração para avaliação de cada amostra
+def generate_html_download(df: pd.DataFrame, g_ext: float, q: float, l: float, f_c: float, f_cj: float, phi_a: float, phi_b: float, psi: float, perda_inicial: float, perda_final: float) -> str:
+    html_lists = []
     for i, row in df.iterrows():
         fixed_variables = {
                     'g (kN/m)': g_ext, 'q (kN/m)': q, 'l (m)': l, 'tipo de seção': 'retangular',
@@ -241,9 +224,11 @@ def generate_html_download(pres_min: float, pres_max: float, exc_min: float, exc
                     'flecha limite de serviço (m)': l/250, 'coeficiente parcial para carga q': psi,
                     'perda inicial de protensão (%)': perda_inicial, 'perda total de protensão (%)': perda_final
                 }
-        html_content = new_obj_ic_jack_pris_html([df['pk (kN)'], df['e_p (m)'], df['bw (m)'], df['h (m)']], fixed_variables)
 
-    return html_content
+        html_content = new_obj_ic_jack_pris_html([row['pk (kN)'], row['ep (m)'], row['bw (m)'], row['h (m)']], fixed_variables)
+        html_lists.append(html_content)
+
+    return html_lists
 
 
 
@@ -323,31 +308,34 @@ with col4:
     height_max = st.number_input(texts["height_max"], value=None)
 
 if st.button(texts["run_simulation"]):
-    html_content = generate_html_download(pres_min, pres_max, exc_min, exc_max, width_min, width_max, height_min, height_max, g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, perda_final)
+    df_results, fig = ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, perda_final, iterations, pop_size, pres_min, pres_max, exc_min, exc_max, width_min, width_max, height_min, height_max)
+    html_contents = generate_html_download(df_results, g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, perda_final)
+    st.session_state.html_contents = html_contents
+    st.session_state.df_results = df_results
+    st.session_state.fig = fig
 
-    towrite = io.BytesIO()
-    towrite.write(html_content.encode("utf-8"))
-    towrite.seek(0)
-    st.download_button("Baixar Resultados", data=towrite, file_name="resultados.html", mime="text/html")
+if "df_results" in st.session_state and "fig" in st.session_state:
+    df_results = st.session_state.df_results
+    fig = st.session_state.fig
+    html_contents = st.session_state.html_contents
 
-#     df_results, fig = ag_monte_carlo(g_ext, q, l, f_c, f_cj, phi_a, phi_b, psi, perda_inicial, perda_final, iterations, pop_size, pres_min, pres_max, exc_min, exc_max, width_min, width_max, height_min, height_max)
-#     st.session_state.df_results = df_results
-#     st.session_state.fig = fig
+    # Criar o botão para download do arquivo HTML
+    for i, html_content in enumerate(html_contents):
+        towrite = io.BytesIO()
+        towrite.write(html_content.encode("utf-8"))
+        towrite.seek(0)
+        st.download_button(f"Donload hmtl {i+1}", data=towrite, file_name="resultados.html", mime="text/html")
 
-# if "df_results" in st.session_state and "fig" in st.session_state:
-#     df_results = st.session_state.df_results
-#     fig = st.session_state.fig
+    # Exibir o gráfico e os resultados
+    st.subheader(texts["results"])
+    df_results_eng = df_results.copy().map(lambda x: f"{x:.3e}" if isinstance(x, (int, float)) else x)
+    st.write(df_results_eng)
+    st.pyplot(fig)
 
-#     # Exibir o gráfico e os resultados
-#     st.subheader(texts["results"])
-#     df_results_eng = df_results.copy().map(lambda x: f"{x:.3e}" if isinstance(x, (int, float)) else x)
-#     st.write(df_results_eng)
-#     st.pyplot(fig)
-
-#     # Criar o arquivo para download
-#     towrite_pareto = BytesIO()
-#     with pd.ExcelWriter(towrite_pareto, engine="xlsxwriter") as writer:
-#         df_results_eng.to_excel(writer, index=False, sheet_name="Pareto Front")
-#     towrite_pareto.seek(0)
-#     st.download_button(texts["download"], towrite_pareto, f"{texts["xlsx_name"]}.xlsx",
-#                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    # Criar o arquivo para download
+    towrite_pareto = BytesIO()
+    with pd.ExcelWriter(towrite_pareto, engine="xlsxwriter") as writer:
+        df_results_eng.to_excel(writer, index=False, sheet_name="Pareto Front")
+    towrite_pareto.seek(0)
+    st.download_button(texts["download"], towrite_pareto, f"{texts["xlsx_name"]}.xlsx",
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
