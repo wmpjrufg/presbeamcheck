@@ -1,14 +1,18 @@
 from protendido import obj_ic_jack_priscilla, new_obj_ic_jack_priscilla, new_obj_ic_jack_pris_html
 from theory_texts import texto_01
 from metapy_toolbox import initial_population_01, genetic_algorithm_01
+
 import io
+import zipfile
+import json
+import logging
+
 from io import BytesIO
 import pandas as pd
 import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
-import json
-import logging
+
 
 # Configuração do logger
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
@@ -231,6 +235,14 @@ def generate_html_download(df: pd.DataFrame, g_ext: float, q: float, l: float, f
     return html_lists
 
 
+def create_html_zip(html_contents):
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for i, html_content in enumerate(html_contents):
+            zip_file.writestr(f"resultados_{i+1}.html", html_content)
+    zip_buffer.seek(0)
+    return zip_buffer
+
 
 st.write("""
 <!DOCTYPE html>
@@ -320,11 +332,10 @@ if "df_results" in st.session_state and "fig" in st.session_state:
     html_contents = st.session_state.html_contents
 
     # Criar o botão para download do arquivo HTML
-    for i, html_content in enumerate(html_contents):
-        towrite = io.BytesIO()
-        towrite.write(html_content.encode("utf-8"))
-        towrite.seek(0)
-        st.download_button(f"Donload hmtl {i+1}", data=towrite, file_name="resultados.html", mime="text/html")
+    st.subheader("Download dos Resultados em HTML")
+    zip_file = create_html_zip(html_contents)
+    st.download_button("Download ZIP", data=zip_file, file_name="resultados.zip", mime="application/zip")
+
 
     # Exibir o gráfico e os resultados
     st.subheader(texts["results"])
