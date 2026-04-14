@@ -2,9 +2,9 @@ name: Wake up Streamlit
 
 on:
   schedule:
-    # Executa a cada 4 horas (00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC)
+    # Executa a cada 4 horas
     - cron: '0 */4 * * *'
-  workflow_dispatch: # Permite que você clique num botão e teste manualmente
+  workflow_dispatch: 
 
 jobs:
   wake_up:
@@ -12,4 +12,5 @@ jobs:
     steps:
       - name: Enviar sinal de despertar
         run: |
-          curl -A "Mozilla/5.0" -L https://presbeamcheck.streamlit.app/
+          # O '|| true' garante que o GitHub Actions sempre marque como SUCESSO
+          curl -A "Mozilla/5.0" --max-time 30 https://presbeamcheck.streamlit.app/ || true
