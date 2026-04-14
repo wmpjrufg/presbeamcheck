@@ -1,0 +1,15 @@
+name: Wake up Streamlit
+
+on:
+  schedule:
+    # Executa a cada 4 horas (00:00, 04:00, 08:00, 12:00, 16:00, 20:00 UTC)
+    - cron: '0 */4 * * *'
+  workflow_dispatch: # Permite que você clique num botão e teste manualmente
+
+jobs:
+  wake_up:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enviar sinal de despertar
+        run: |
+          curl -A "Mozilla/5.0" -L https://presbeamcheck.streamlit.app/
