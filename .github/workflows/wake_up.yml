@@ -1,0 +1,27 @@
+name: Wake up Streamlit
+
+on:
+  schedule:
+    # Executa a cada 1 hora
+    - cron: '0 */1 * * *'
+  workflow_dispatch: # Permite rodar manualmente para testar
+
+jobs:
+  wake_up:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Instalar dependências
+        run: |
+          pip install playwright
+          playwright install chromium --with-deps
+
+      - name: Executar script de despertar
+        run: python wake_up.py
