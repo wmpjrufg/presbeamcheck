@@ -2,9 +2,13 @@ name: Wake up Streamlit
 
 on:
   schedule:
-    # Executa a cada 1 hora
-    - cron: '0 */1 * * *'
-  workflow_dispatch: # Permite rodar manualmente para testar
+    # Executa a cada 4 horas
+    - cron: '0 */4 * * *'
+  workflow_dispatch: 
+
+env:
+  # Isso remove o aviso de depreciação do Node.js 20
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   wake_up:
@@ -14,9 +18,9 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Configurar Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: '3.11' # Versão mais estável atual
 
       - name: Instalar dependências
         run: |
